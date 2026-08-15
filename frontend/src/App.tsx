@@ -16,10 +16,21 @@ import { DoctorDashboard } from './pages/DoctorDashboard';
 import { PatientsList } from './pages/PatientsList';
 // Import the detailed view for a single specific patient
 import { PatientDetail } from './pages/PatientDetail';
+// Additional doctor pages
+import { Medications } from './pages/Medications';
+import { RiskAlerts } from './pages/RiskAlerts';
+import { Interventions } from './pages/Interventions';
+import { Profile } from './pages/Profile';
+import { DeveloperView } from './pages/DeveloperView';
+import { DoctorMessages } from './pages/DoctorMessages';
+// Patient chat
+import { PatientChat } from './pages/PatientChat';
+import { PatientProfile } from './pages/PatientProfile';
 
 // -- SHARED & PATIENT AUTH IMPORTS --
 // Import the main landing/login screen where users choose Doctor vs Patient
 import { Login } from './pages/Login';
+import { DoctorLogin } from './pages/DoctorLogin';
 // Import the Patient Portal selection screen (Existing vs New Patient)
 import { PatientAuthLanding } from './pages/PatientAuthLanding';
 // Import the login screen for existing patients
@@ -51,11 +62,21 @@ const App: React.FC = () => {
           
           {/* Render the PatientsList when URL is "/doctor/patients" */}
           <Route path="patients" element={<PatientsList />} />
+
+          <Route path="medications" element={<Medications />} />
+          <Route path="risk-alerts" element={<RiskAlerts />} />
+          <Route path="interventions" element={<Interventions />} />
+          <Route path="messages" element={<DoctorMessages />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="dev" element={<DeveloperView />} />
           
           {/* Render the PatientDetail page for a specific ID (e.g., "/doctor/patient/P0001") */}
           <Route path="patient/:id" element={<PatientDetail />} />
         
         </Route>
+
+        {/* Doctor Login page (public) */}
+        <Route path="/doctor/login" element={<DoctorLogin />} />
 
         {/* PATIENT ROUTES GROUP */}
         {/* Route for the Patient Portal selection screen (Existing vs New) */}
@@ -69,7 +90,13 @@ const App: React.FC = () => {
         
         {/* Route for the main patient adherence tracking dashboard */}
         <Route path="/patient/dashboard" element={<PatientDashboard />} />
-        
+
+        {/* Patient chat route (patient -> doctor conversation) */}
+        <Route path="/patient/chat" element={<PatientChat />} />
+
+        {/* Patient profile route */}
+        <Route path="/patient/profile" element={<PatientProfile />} />
+
         {/* FALLBACK ROUTE */}
         {/* If the user types a URL that doesn't match anything above (the "*" wildcard), redirect them back to the root "/" */}
         <Route path="*" element={<Navigate to="/" replace />} />

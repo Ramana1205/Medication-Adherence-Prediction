@@ -81,10 +81,10 @@ export const Login: React.FC = () => {
               
               {/* Button: Routes directly to Doctor Dashboard, simulating an instant login for hackathon evaluation */}
               <Button 
-                onClick={() => navigate('/doctor/dashboard')}
+                              onClick={() => navigate('/doctor/login')}
                 className="w-full bg-[#1e3a8a] hover:bg-[#172e6e] text-white py-6"
               >
-                Demo Doctor Login
+                              Doctor Login
               </Button>
             </div>
 

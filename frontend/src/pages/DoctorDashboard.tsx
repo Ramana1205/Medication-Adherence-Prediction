@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../store/db';
 import { Patient } from '../types';
@@ -9,12 +9,38 @@ import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 export const DoctorDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<'ALL' | 'HIGH' | 'MEDIUM' | 'LOW'>('ALL');
 
   useEffect(() => {
     setPatients(db.getPatients());
   }, []);
 
-  if (patients.length === 0) return <div>Loading...</div>;
+  // High-risk patients priority list (use backend risk_level as source of truth)
+  const highRiskPatients = useMemo(() => {
+    return patients
+      .filter(p => p.risk_level === 'HIGH')
+      .sort((a, b) => {
+        const aRisk = (a.risk_percentage ?? a.risk_score ?? 0);
+        const bRisk = (b.risk_percentage ?? b.risk_score ?? 0);
+        return bRisk - aRisk;
+      });
+  }, [patients]);
+
+  const topHighRisk = useMemo(() => highRiskPatients.slice(0,5), [highRiskPatients]);
+
+  if (patients.length === 0) return <div className="p-6">No patients available.</div>;
+
+  const filteredPatients = patients.filter(p => {
+    // Filter by risk level
+    if (filter !== 'ALL' && p.risk_level !== filter) return false;
+    // Search by patient id or name (case-insensitive)
+    if (!search) return true;
+    const q = search.toLowerCase();
+    if (p.patient_id && p.patient_id.toLowerCase().includes(q)) return true;
+    if (p.patient_name && p.patient_name.toLowerCase().includes(q)) return true;
+    return false;
+  });
 
   // KPI Calculations based on CSV dataset metrics
   const totalPatients = patients.length;
@@ -72,7 +98,7 @@ export const DoctorDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border-slate-200 border-t-4 border-t-red-500">
+        <Card onClick={() => navigate('/doctor/patients?filter=HIGH')} className="cursor-pointer shadow-sm border-slate-200 border-t-4 border-t-red-500">
           <CardContent className="p-4 flex flex-col justify-between h-full">
             <div className="flex justify-between items-start">
               <div>
@@ -85,7 +111,7 @@ export const DoctorDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border-slate-200 border-t-4 border-t-amber-500">
+        <Card onClick={() => navigate('/doctor/patients?filter=MEDIUM')} className="cursor-pointer shadow-sm border-slate-200 border-t-4 border-t-amber-500">
           <CardContent className="p-4 flex flex-col justify-between h-full">
             <div className="flex justify-between items-start">
               <div>
@@ -98,7 +124,7 @@ export const DoctorDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border-slate-200 border-t-4 border-t-green-500">
+        <Card onClick={() => navigate('/doctor/patients?filter=LOW')} className="cursor-pointer shadow-sm border-slate-200 border-t-4 border-t-green-500">
           <CardContent className="p-4 flex flex-col justify-between h-full">
             <div className="flex justify-between items-start">
               <div>
@@ -138,8 +164,63 @@ export const DoctorDashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Analytics Row */}
-      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Patients Needing Attention (High-risk priority) */}
+        <div className="mt-4">
+          <Card className="shadow-sm border-slate-200">
+            <CardHeader className="flex items-start justify-between pb-2 border-b border-slate-100">
+              <div>
+                <CardTitle className="text-base font-bold text-slate-800">Patients Needing Attention</CardTitle>
+                <p className="text-sm text-slate-500">Patients with higher estimated medication non-adherence risk</p>
+              </div>
+              <div className="text-sm text-slate-500">{highRiskPatients.length} high-risk patients</div>
+            </CardHeader>
+            <CardContent>
+              {highRiskPatients.length === 0 ? (
+                <div className="p-6 text-center text-slate-500">No high-risk patients currently identified.</div>
+              ) : (
+                <div className="space-y-4">
+                  {topHighRisk.map(p => (
+                    <div key={p.patient_id} className="flex items-center justify-between p-3 bg-white rounded border border-slate-100">
+                      <div className="flex flex-col">
+                        <div className="flex items-baseline gap-3">
+                          <div className="font-bold text-slate-800">{p.patient_id}</div>
+                          <div className="text-sm text-slate-600">{p.patient_name || 'Unknown'}</div>
+                        </div>
+                        <div className="mt-1 text-sm text-slate-600">
+                          <span className="font-semibold">Estimated Non-Adherence Risk:</span> {(p.risk_percentage ?? p.risk_score) !== undefined && (p.risk_percentage ?? p.risk_score) !== null ? `${Math.round((p.risk_percentage ?? p.risk_score) as number)}%` : 'N/A'}
+                        </div>
+                        <div className="mt-1 text-sm text-slate-600">Previous adherence: {p.prior_adherence !== undefined ? `${p.prior_adherence}%` : 'N/A'}</div>
+                        {p.risk_factors && p.risk_factors.length > 0 && (
+                          <div className="mt-2 text-sm text-slate-700">
+                            <div className="font-medium text-slate-600">Top factors:</div>
+                            <ul className="list-disc ml-5 mt-1 text-slate-600">
+                              {p.risk_factors.slice(0,2).map((f, i) => <li key={i}>{f}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${p.risk_level === 'HIGH' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{p.risk_level}</span>
+                        <button onClick={() => navigate(`/doctor/patient/${p.patient_id}`)} className="mt-4 text-sm font-bold text-blue-600 hover:underline">View Patient</button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {highRiskPatients.length > 5 && (
+                    <div className="text-right">
+                      <button onClick={() => setFilter('HIGH')} className="text-sm font-semibold text-blue-600 hover:underline">View all high-risk patients</button>
+                    </div>
+                  )}
+
+                  <div className="text-xs text-slate-500 italic mt-2">AI-generated risk assessment for decision support. Clinical judgment should be used.</div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Analytics Row */}
+        <div className="grid lg:grid-cols-3 gap-6">
         
         {/* Risk Distribution */}
         <Card className="shadow-sm border-slate-200">
@@ -254,39 +335,64 @@ export const DoctorDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* High-Risk Patients */}
+        {/* Patient List with Search & Filter */}
         <Card className="shadow-sm border-slate-200">
           <CardHeader className="flex flex-row items-center justify-between pb-2 border-b border-slate-100">
-            <CardTitle className="text-base font-bold text-slate-800">High-Risk Patients <span className="text-slate-400 font-normal text-sm ml-1">(Top 5)</span></CardTitle>
-            <button className="text-xs font-semibold text-blue-600 hover:underline">View All</button>
+            <div>
+              <CardTitle className="text-base font-bold text-slate-800">Patients</CardTitle>
+              <div className="text-xs text-slate-400">Search, filter and review patient risk</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Search by ID or name"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="text-sm p-2 border border-slate-200 rounded bg-white"
+              />
+              <select value={filter} onChange={(e) => setFilter(e.target.value as any)} className="text-sm p-2 border border-slate-200 rounded bg-white">
+                <option value="ALL">All</option>
+                <option value="HIGH">High Risk</option>
+                <option value="MEDIUM">Medium Risk</option>
+                <option value="LOW">Low Risk</option>
+              </select>
+            </div>
           </CardHeader>
           <CardContent className="pt-0 px-0">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-slate-50/50 text-slate-500 border-b border-slate-100 text-xs">
-                <tr>
-                  <th className="py-3 px-4 font-semibold">Patient ID</th>
-                  <th className="py-3 px-4 font-semibold">Name</th>
-                  <th className="py-3 px-4 font-semibold">Adherence</th>
-                  <th className="py-3 px-4 font-semibold">Risk Score</th>
-                  <th className="py-3 px-4 font-semibold text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {highRisk.slice(0, 5).sort((a,b) => b.risk_score - a.risk_score).map(p => (
-                  <tr key={p.patient_id} className="hover:bg-slate-50/50">
-                    <td className="py-3 px-4 font-bold text-slate-800">{p.patient_id}</td>
-                    <td className="py-3 px-4 text-slate-600">{p.patient_name}</td>
-                    <td className="py-3 px-4 text-slate-600">{p.prior_adherence}%</td>
-                    <td className="py-3 px-4">
-                      <span className="font-bold text-red-600">{p.risk_score}</span>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <button onClick={() => navigate(`/doctor/patient/${p.patient_id}`)} className="text-xs font-bold text-blue-600 hover:underline">View</button>
-                    </td>
+            {filteredPatients.length === 0 ? (
+              <div className="p-6 text-center text-slate-500">No patients match your search or filter.</div>
+            ) : (
+              <table className="w-full text-sm text-left">
+                <thead className="bg-slate-50/50 text-slate-500 border-b border-slate-100 text-xs">
+                  <tr>
+                    <th className="py-3 px-4 font-semibold">Patient ID</th>
+                    <th className="py-3 px-4 font-semibold">Name</th>
+                    <th className="py-3 px-4 font-semibold">Risk Level</th>
+                    <th className="py-3 px-4 font-semibold">Risk %</th>
+                    <th className="py-3 px-4 font-semibold">Previous Adherence</th>
+                    <th className="py-3 px-4 font-semibold text-right">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredPatients.sort((a,b) => ((b.risk_percentage ?? b.risk_score ?? 0) - (a.risk_percentage ?? a.risk_score ?? 0))).map(p => (
+                    <tr key={p.patient_id} className={`hover:bg-slate-50/50 cursor-pointer`} onClick={() => navigate(`/doctor/patient/${p.patient_id}`)}>
+                      <td className="py-3 px-4 font-bold text-slate-800">{p.patient_id}</td>
+                      <td className="py-3 px-4 text-slate-600">{p.patient_name || 'Unknown'}</td>
+                      <td className="py-3 px-4">
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${p.risk_level === 'HIGH' ? 'bg-red-100 text-red-700' : p.risk_level === 'MEDIUM' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                          {p.risk_level || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-slate-800">{(p.risk_percentage ?? p.risk_score) !== undefined && (p.risk_percentage ?? p.risk_score) !== null ? `${(p.risk_percentage ?? p.risk_score)}%` : 'N/A'}</td>
+                      <td className="py-3 px-4 text-slate-600">{p.prior_adherence !== undefined ? `${p.prior_adherence}%` : 'N/A'}</td>
+                      <td className="py-3 px-4 text-right">
+                        <button onClick={(e) => { e.stopPropagation(); navigate(`/doctor/patient/${p.patient_id}`); }} className="text-xs font-bold text-blue-600 hover:underline">View</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </CardContent>
         </Card>
 

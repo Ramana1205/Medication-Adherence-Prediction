@@ -55,9 +55,9 @@ export const PatientDetail: React.FC = () => {
 
         <Card className="border-t-4 border-t-blue-500 shadow-sm">
           <CardContent className="p-5">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Adherence</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Previous Adherence</p>
             <h2 className="text-4xl font-black text-slate-800">{patient.prior_adherence}%</h2>
-            <p className="mt-2 text-xs text-slate-500 font-medium">Recent calculation</p>
+              <p className="mt-2 text-xs text-slate-500 font-medium">Historical adherence (prior year)</p>
           </CardContent>
         </Card>
 
@@ -80,40 +80,80 @@ export const PatientDetail: React.FC = () => {
 
       <div className="grid lg:grid-cols-2 gap-6">
         
-        {/* Why is this patient at risk? */}
+        {/* AI Medication Adherence Assessment */}
         <Card className="shadow-sm border-slate-200">
           <CardHeader className="pb-2 border-b border-slate-100">
             <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
-              <ShieldAlert size={18} className="text-red-500" /> Why is this patient at risk?
+              <ShieldAlert size={18} className="text-red-500" /> AI Medication Adherence Assessment
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6 space-y-4">
-            <p className="text-sm font-bold text-slate-700 mb-4">Main Risk Factors</p>
-            
-            {patient.previous_missed_doses > 2 && (
-              <div className="flex items-center gap-3">
-                <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0"><span className="text-xs font-bold">🔴</span></div>
-                <span className="text-sm font-medium text-slate-800">{patient.previous_missed_doses} missed doses</span>
+            {/* If no prediction data available */}
+            {typeof patient.risk_level === 'undefined' && typeof patient.risk_score === 'undefined' && typeof patient.adherence_probability === 'undefined' ? (
+              <div className="text-sm text-slate-600">AI assessment not available yet.</div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase font-bold">Risk Level</p>
+                    <div className={`mt-2 inline-flex px-2.5 py-0.5 rounded text-sm font-bold uppercase ${patient.risk_level === 'HIGH' ? 'bg-red-100 text-red-700' : patient.risk_level === 'MEDIUM' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                      {patient.risk_level || 'N/A'}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-slate-500 uppercase font-bold">Estimated Non-Adherence Risk</p>
+                    <p className="text-2xl font-black text-slate-800 mt-1">{(typeof patient.risk_percentage === 'number' ? patient.risk_percentage : patient.risk_score) ?? 'N/A'}%</p>
+                    <p className="text-xs text-slate-400">(Higher = greater risk of non-adherence)</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs text-slate-500 uppercase font-bold">Estimated Adherence Probability</p>
+                  <p className="text-lg font-bold text-slate-800 mt-1">{typeof patient.adherence_probability === 'number' ? `${(patient.adherence_probability * 100).toFixed(2)}%` : 'N/A'}</p>
+                </div>
               </div>
             )}
-            
-            {patient.refill_gap_days > 5 && (
-              <div className="flex items-center gap-3">
-                <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0"><span className="text-xs font-bold">🔴</span></div>
-                <span className="text-sm font-medium text-slate-800">{patient.refill_gap_days}-day refill delay</span>
+          </CardContent>
+        </Card>
+
+        {/* Risk Factors / Protective Factors / Recommendations */}
+        <Card className="shadow-sm border-slate-200">
+          <CardHeader className="pb-2 border-b border-slate-100">
+            <CardTitle className="text-base font-bold text-slate-800">Why may this patient be at higher risk?</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-4">
+            {Array.isArray(patient.risk_factors) && patient.risk_factors.length > 0 ? (
+              <div>
+                <p className="text-sm font-bold text-slate-700 mb-2">Main Risk Factors</p>
+                <ul className="list-disc list-inside text-sm text-slate-700 space-y-1">
+                  {patient.risk_factors.map(f => <li key={f}>{f}</li>)}
+                </ul>
               </div>
+            ) : (
+              <div className="text-sm text-slate-500">No primary risk factors identified by the AI.</div>
             )}
-            
-            {patient.num_meds > 2 && (
-              <div className="flex items-center gap-3">
-                <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shrink-0"><span className="text-xs font-bold">🟠</span></div>
-                <span className="text-sm font-medium text-slate-800">Complex medication schedule ({patient.num_meds} medicines)</span>
-              </div>
-            )}
-            
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 shrink-0"><span className="text-xs font-bold">🟡</span></div>
-              <span className="text-sm font-medium text-slate-800">Evening doses frequently missed</span>
+
+            <div>
+              <p className="text-sm font-bold text-slate-700 mb-2">Protective Factors</p>
+              {Array.isArray(patient.protective_factors) && patient.protective_factors.length > 0 ? (
+                <ul className="list-disc list-inside text-sm text-slate-700 space-y-1">
+                  {patient.protective_factors.map(f => <li key={f}>{f}</li>)}
+                </ul>
+              ) : (
+                <p className="text-sm text-slate-500">No significant protective factors identified.</p>
+              )}
+            </div>
+
+            <div>
+              <p className="text-sm font-bold text-slate-700 mb-2">Suggested Follow-up</p>
+              {Array.isArray(patient.recommendations) && patient.recommendations.length > 0 ? (
+                <ul className="list-disc list-inside text-sm text-slate-700 space-y-1">
+                  {patient.recommendations.map(r => <li key={r}>{r}</li>)}
+                </ul>
+              ) : (
+                <p className="text-sm text-slate-500">No AI recommendations available.</p>
+              )}
+              <p className="mt-3 text-xs text-slate-400">AI-generated decision-support suggestions. Clinical judgment should be used.</p>
             </div>
           </CardContent>
         </Card>
@@ -208,12 +248,21 @@ export const PatientDetail: React.FC = () => {
 
             <div className="flex gap-3">
               {interventionStatus === 'Pending' && (
-                <Button className="w-full bg-[#1e3a8a] hover:bg-[#172e6e]" onClick={() => setInterventionStatus('In Progress')}>
+                <Button className="w-full bg-[#1e3a8a] hover:bg-[#172e6e]" onClick={() => {
+                  // Persist intervention
+                  db.addIntervention(patient.patient_id, 'Evening reminder', 'Provide an evening medication reminder.', 'Dr. Sharma');
+                  setInterventionStatus('In Progress');
+                }}>
                   Mark Intervention In Progress
                 </Button>
               )}
               {interventionStatus === 'In Progress' && (
-                <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white" onClick={() => setInterventionStatus('Completed')}>
+                <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white" onClick={() => {
+                  // Find the most recent intervention for this patient and mark completed
+                  const ints = db.getInterventions().filter((i:any) => i.patient_id === patient.patient_id).sort((a:any,b:any)=> new Date(b.updated_at).getTime()-new Date(a.updated_at).getTime());
+                  if (ints && ints.length>0) db.updateInterventionStatus(ints[0].intervention_id, 'COMPLETED');
+                  setInterventionStatus('Completed');
+                }}>
                   Mark Completed
                 </Button>
               )}

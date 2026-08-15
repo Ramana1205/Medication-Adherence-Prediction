@@ -1,24 +1,82 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { 
   HeartPulse, LayoutDashboard, Users, Pill, 
   AlertTriangle, Activity, Settings, Code,
-  Bell, HelpCircle, LogOut
+  Bell, HelpCircle, LogOut, MessageSquare
 } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { db } from '../../store/db';
 
 export const DoctorLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [showNotifs, setShowNotifs] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const notifsRef = React.useRef<HTMLDivElement | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [doctorName, setDoctorName] = useState<string | null>(null);
 
   const isActive = (path: string) => location.pathname.includes(path);
+
+  useEffect(() => {
+    // Redirect to login if not authenticated as doctor
+    const auth = db.getAuthSession();
+    if (!auth || auth.role !== 'DOCTOR') {
+      navigate('/doctor/login');
+      return;
+    }
+    setDoctorName(auth.name || 'Dr.');
+    const nots = db.getNotifications().filter((n:any) => !n.for_role || n.for_role === 'doctor');
+    setNotifications(nots);
+    setUnreadCount(nots.filter((n:any) => !n.read).length);
+    setAuthChecked(true);
+  }, []);
+
+  // Close notifications when clicking outside
+  React.useEffect(() => {
+    const onPointerDown = (e: PointerEvent) => {
+      if (!notifsRef.current) return;
+      if (notifsRef.current.contains(e.target as Node)) return;
+      setShowNotifs(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, []);
+
+  const toggleNotifs = () => {
+    const next = !showNotifs;
+    setShowNotifs(next);
+    if (next) {
+      // refresh list
+      const nots = db.getNotifications().filter((n:any) => !n.for_role || n.for_role === 'doctor');
+      setNotifications(nots);
+      setUnreadCount(nots.filter((n:any) => !n.read).length);
+    }
+  };
+
+  const handleOpenNotification = (n: any) => {
+    db.markNotificationRead(n.id);
+    const nots = db.getNotifications().filter((x:any) => !x.for_role || x.for_role === 'doctor');
+    setNotifications(nots);
+    setUnreadCount(nots.filter((x:any) => !x.read).length);
+    if (n.patient_id) navigate(`/doctor/messages?patient=${n.patient_id}`);
+  };
+
+  const handleMarkAll = () => {
+    db.markAllNotificationsReadForRole('doctor');
+    const nots = db.getNotifications().filter((n:any) => !n.for_role || n.for_role === 'doctor');
+    setNotifications(nots);
+    setUnreadCount(0);
+  };
 
   return (
     <div className="flex h-screen bg-[#f8f9fa] font-sans">
       
       {/* Sidebar Navigation */}
       <aside className="w-64 bg-[#1e293b] text-slate-300 flex flex-col hidden md:flex shrink-0 shadow-lg z-20">
-        
+      
         {/* Logo */}
         <div className="h-16 flex items-center px-6 border-b border-slate-700/50 cursor-pointer bg-[#0f172a]" onClick={() => navigate('/doctor/dashboard')}>
           <div className="text-blue-400 mr-3">
@@ -43,15 +101,20 @@ export const DoctorLayout: React.FC = () => {
             <Users size={18} /> My Patients
           </button>
           
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
+          <button onClick={() => navigate('/doctor/medications')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/medications') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
             <Pill size={18} /> Medications
           </button>
+
+          <button onClick={() => navigate('/doctor/messages')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/messages') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+            <MessageSquare size={18} /> Messages
+            {unreadCount > 0 && <span className="ml-auto text-[10px] font-bold bg-red-600 text-white rounded-full px-2 py-0.5">{unreadCount}</span>}
+          </button>
           
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
+          <button onClick={() => navigate('/doctor/risk-alerts')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/risk-alerts') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
             <AlertTriangle size={18} /> Risk & Alerts
           </button>
           
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
+          <button onClick={() => navigate('/doctor/interventions')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/interventions') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
             <Activity size={18} /> Interventions
           </button>
 
@@ -59,11 +122,11 @@ export const DoctorLayout: React.FC = () => {
             <p className="px-3 text-xs font-bold text-slate-500 uppercase tracking-wider">System</p>
           </div>
 
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
+          <button onClick={() => navigate('/doctor/profile')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/profile') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
             <Settings size={18} /> Profile & Settings
           </button>
 
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-amber-500 hover:bg-slate-800">
+          <button onClick={() => navigate('/doctor/dev')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-amber-500 ${isActive('/dev') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800'}`}>
             <Code size={18} /> Developer / Evaluation
           </button>
         </nav>
@@ -71,12 +134,12 @@ export const DoctorLayout: React.FC = () => {
         {/* User Footer */}
         <div className="p-4 border-t border-slate-700/50 bg-[#0f172a]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden shrink-0 border border-slate-600">
-              <img src="https://ui-avatars.com/api/?name=Dr.+Sharma&background=334155&color=94a3b8" alt="Dr" />
-            </div>
+            <button type="button" onClick={() => navigate('/doctor/profile')} className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden shrink-0 border border-slate-600 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-400">
+              <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(doctorName || 'Dr')}&background=334155&color=94a3b8`} alt="Dr" />
+              </button>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-white truncate">Dr. Sharma</p>
-              <p className="text-xs text-slate-400 truncate">Cardiology Clinic</p>
+              <p className="text-sm font-bold text-white truncate">{doctorName || 'Dr.'}</p>
+              <p className="text-xs text-slate-400 truncate">Clinic</p>
             </div>
           </div>
         </div>
@@ -84,7 +147,7 @@ export const DoctorLayout: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        
+      
         {/* Top Header */}
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 shrink-0">
           <div className="flex items-center gap-4">
@@ -103,18 +166,40 @@ export const DoctorLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-5">
-            <div className="hidden sm:flex items-center px-3 py-1 bg-green-50 text-green-700 border border-green-200 rounded-full text-xs font-semibold">
-              Demo / Synthetic Data
+
+            <div className="relative" ref={notifsRef as any}>
+              <button onClick={toggleNotifs} className="relative text-slate-500 hover:text-slate-700 transition-colors p-2 rounded-full">
+                <Bell size={20} />
+                {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold text-white">{unreadCount}</span>}
+              </button>
+
+              {showNotifs && (
+                <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-slate-100 z-50">
+                  <div className="p-3 border-b border-slate-100 flex items-center justify-between">
+                    <div className="font-bold text-slate-800">Notifications</div>
+                    <button onClick={handleMarkAll} className="text-xs text-slate-500 hover:underline">Mark all as read</button>
+                  </div>
+                  <div className="max-h-64 overflow-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-sm text-slate-500">No notifications</div>
+                    ) : (
+                      notifications.map(n => (
+                        <div key={n.id} className={`p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer ${!n.read ? 'bg-blue-50/40' : ''}`} onClick={() => handleOpenNotification(n)}>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="font-semibold text-slate-800">{n.title}</div>
+                              <div className="text-sm text-slate-500 truncate">{n.message}</div>
+                            </div>
+                            <div className="text-xs text-slate-400 ml-4">{new Date(n.timestamp).toLocaleString()}</div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
-            <button className="relative text-slate-500 hover:text-slate-700 transition-colors">
-              <Bell size={20} />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold text-white">12</span>
-            </button>
-            <button className="text-slate-500 hover:text-slate-700 transition-colors">
-              <HelpCircle size={20} />
-            </button>
-            
             <div className="pl-5 border-l border-slate-200">
               <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-700 hover:bg-slate-100" onClick={() => navigate('/')}>
                 <LogOut size={16} className="mr-2" /> Logout

@@ -39,7 +39,55 @@ export interface Patient {
   created_at?: string;
   // Optional (?) raw object storing exact ML features parsed from the CSV dataset
   _raw_features?: any;
+  // Optional values returned by the FastAPI backend for the current prediction
+  risk_factors?: string[];
+  protective_factors?: string[];
+  recommendations?: string[];
+  // Model outputs (optional)
+  adherence_probability?: number; // e.g., 0.2231
+  non_adherence_risk?: number; // e.g., 0.7769
+  risk_percentage?: number; // e.g., 77.69 (human-friendly percent)
+  // Follow-up and messaging flags for doctor workflows
+  follow_up_required?: boolean;
+  patient_contacted?: boolean;
+  ai_reviewed?: boolean;
 }
+
+// Message between patient and doctor
+export interface Message {
+  id: string;
+  patient_id: string;
+  sender: 'patient' | 'doctor';
+  message: string;
+  timestamp: string; // ISO
+  read?: boolean; // read by the recipient
+}
+
+// In-app notification for doctor
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  patient_id?: string;
+  timestamp: string; // ISO
+  read: boolean;
+  // Optional role that this notification is intended for (doctor or patient). If absent, it's shown to both.
+  for_role?: 'doctor' | 'patient';
+}
+
+// Intervention record persisted by doctors when taking action
+export interface Intervention {
+  intervention_id: string;
+  patient_id: string;
+  patient_name: string;
+  doctor: string;
+  intervention_type: string;
+  description?: string;
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+  created_at: string;
+  updated_at: string;
+}
+
 
 // Define the structure for a Medication prescription
 export interface Medication {
@@ -47,8 +95,10 @@ export interface Medication {
   medicine_id: string;
   // The ID of the patient this belongs to
   patient_id: string;
-  // Name and dosage (e.g., 'Metformin 500mg')
+  // Name (e.g., 'Metformin')
   medicine_name: string;
+  // Dose (e.g., '500 mg')
+  dose?: string;
   // How often they take it (e.g., 'Twice daily')
   frequency: string;
   // Array of specific times they are scheduled to take it (e.g., ['08:00 AM', '08:00 PM'])
@@ -61,6 +111,8 @@ export interface Medication {
   quantity: number;
   // How many days until they need a refill
   refill_interval: number;
+  // Active flag
+  active?: boolean;
 }
 
 // Define the structure for a specific scheduled dose (a "Slot" in time)

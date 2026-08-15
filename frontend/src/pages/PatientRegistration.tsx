@@ -8,6 +8,8 @@ import { HeartPulse, ArrowLeft, CheckCircle2, ChevronRight, ChevronLeft } from '
 import { Button } from '../components/ui/Button';
 // Import the mock database that handles the ML logic and data storage
 import { db } from '../store/db';
+import { predictAdherence, type PredictionResponse } from '../lib/api';
+import type { Medication } from '../types';
 
 // Define the Registration Wizard component
 export const PatientRegistration: React.FC = () => {
@@ -21,6 +23,9 @@ export const PatientRegistration: React.FC = () => {
   const [error, setError] = useState('');
   // State: Stores the newly generated Patient ID after successful registration
   const [successId, setSuccessId] = useState('');
+  // State: Stores the backend prediction result for display on the success screen
+  const [predictionResult, setPredictionResult] = useState<PredictionResponse | null>(null);
+  const [medicationsList, setMedicationsList] = useState<Partial<Medication>[]>([]);
 
   // State: The massive form data object that precisely maps to the CSV ML features
   const [formData, setFormData] = useState({
@@ -68,6 +73,14 @@ export const PatientRegistration: React.FC = () => {
     if (!formData.num_meds || parseInt(formData.num_meds) < 0) return "Please enter a valid number of medicines.";
     if (!formData.dose_freq) return "Please select a daily frequency.";
     if (!formData.med_duration || parseInt(formData.med_duration) < 0) return "Please enter a valid duration.";
+    // If the user added medications, validate each
+    for (let i = 0; i < medicationsList.length; i++) {
+      const m = medicationsList[i];
+      if (!m.medicine_name || !m.medicine_name.trim()) return `Please enter a medicine name for medication ${i+1}.`;
+      if (!m.dose || !m.dose.trim()) return `Please enter a dose for medication ${i+1}.`;
+      if (!m.frequency) return `Please select a frequency for medication ${i+1}.`;
+      if (!m.scheduled_times || m.scheduled_times.length === 0) return `Please add at least one schedule time for medication ${i+1}.`;
+    }
     return null;
   };
 
@@ -104,52 +117,108 @@ export const PatientRegistration: React.FC = () => {
     setError(''); // Clear any errors
   };
 
+  // Helpers for medication rows
+  const addMedicationRow = () => setMedicationsList(prev => [...prev, { medicine_name: '', dose: '', frequency: 'Once daily', scheduled_times: ['08:00 AM'] }]);
+  const removeMedicationRow = (index: number) => setMedicationsList(prev => prev.filter((_, i) => i !== index));
+  const updateMedicationField = (index: number, field: keyof Partial<Medication>, value: any) => {
+    setMedicationsList(prev => prev.map((m, i) => i === index ? { ...m, [field]: value } : m));
+  };
+
   // Function called on Step 4 to finalize registration
-  const handleSubmit = () => {
-    setLoading(true); // Show loading state on button
-    
-    // Simulate a network request delay (like calling a Python ML backend)
-    setTimeout(() => {
-      // Calculate a basic baseline adherence just for the mock
-      const adherenceBase = 100 - (parseInt(formData.missed_doses)*2) - (parseInt(formData.refill_gap)*1.5);
-      
-      // Call the database function to register the patient
-      // This is where we pack all the UI answers into the exact CSV _raw_features payload
+  const handleSubmit = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const parsedAge = Number(formData.age) || 0;
+      const parsedChronicConditions = Number(formData.chronic_conditions) || 0;
+      const parsedNumMeds = Number(formData.num_meds) || 0;
+      const parsedRefillGap = Number(formData.refill_gap) || 0;
+      const parsedMissedDoses = Number(formData.missed_doses) || 0;
+      const parsedPriorYearAdherence = Math.min(100, Math.max(0, 100 - (parsedMissedDoses * 2) - (parsedRefillGap * 1.5)));
+      const parsedDaysSinceLastRefill = Number(formData.days_since_last_refill) || 0;
+      const parsedMissedAppointments = Number(formData.missed_appointments) || 0;
+      const parsedMedicationChanges = formData.med_changes === 'Yes' ? 1 : 0;
+      const parsedDailyDoseFrequency = formData.dose_freq === 'Morning' ? 1 : (
+        formData.dose_freq === 'Twice daily' ? 2 : (
+          formData.dose_freq === 'Three times daily' ? 3 : 4
+        )
+      );
+      const parsedMedicationDurationDays = Number(formData.med_duration) || 0;
+      const parsedGenderM = formData.gender === 'Male' ? 1 : 0;
+      const parsedGenderF = formData.gender === 'Female' ? 1 : 0;
+      const parsedCopayTierHigh = formData.copay_tier === 'high' ? 1 : 0;
+      const parsedCopayTierMedium = formData.copay_tier === 'medium' ? 1 : 0;
+      const parsedCopayTierLow = formData.copay_tier === 'low' ? 1 : 0;
+      const parsedMentalHealthFlag = formData.mental_health === 'Yes' ? 1 : 0;
+
+      const prediction = await predictAdherence({
+        age: parsedAge,
+        chronic_conditions: parsedChronicConditions,
+        num_meds: parsedNumMeds,
+        refill_gap_days: parsedRefillGap,
+        prior_year_adherence: parsedPriorYearAdherence,
+        mental_health_flag: parsedMentalHealthFlag,
+        missed_doses_recent: parsedMissedDoses,
+        days_since_last_refill: parsedDaysSinceLastRefill,
+        missed_appointments: parsedMissedAppointments,
+        medication_changes: parsedMedicationChanges,
+        daily_dose_frequency: parsedDailyDoseFrequency,
+        medication_duration_days: parsedMedicationDurationDays,
+        gender_F: parsedGenderF,
+        gender_M: parsedGenderM,
+        copay_tier_high: parsedCopayTierHigh,
+        copay_tier_low: parsedCopayTierLow,
+        copay_tier_medium: parsedCopayTierMedium,
+      });
+
       const newPatient = db.registerNewPatient({
         patient_name: formData.patient_name,
-        age: parseInt(formData.age),
+        age: parsedAge,
         gender: formData.gender,
-        chronic_conditions: parseInt(formData.chronic_conditions),
-        previous_missed_doses: parseInt(formData.missed_doses),
-        previous_missed_refills: parseInt(formData.missed_refills) || 0,
-        refill_gap_days: parseInt(formData.refill_gap),
-        prior_adherence: Math.max(0, adherenceBase),
-        
-        // Exact feature mapping for the Machine Learning Model
+        chronic_conditions: parsedChronicConditions,
+        previous_missed_doses: parsedMissedDoses,
+        previous_missed_refills: Number(formData.missed_refills) || 0,
+        refill_gap_days: parsedRefillGap,
+        // Keep prior_adherence as the historical estimate derived from the form
+        prior_adherence: Math.round(parsedPriorYearAdherence),
         _raw_features: {
-          mental_health_flag: formData.mental_health === 'Yes' ? 1 : 0,
-          days_since_last_refill: parseInt(formData.days_since_last_refill),
-          missed_appointments: parseInt(formData.missed_appointments),
-          medication_changes: formData.med_changes === 'Yes' ? 1 : 0,
-          daily_dose_frequency: formData.dose_freq === 'Morning' ? 1 : (formData.dose_freq === 'Twice daily' ? 2 : (formData.dose_freq === 'Three times daily' ? 3 : 4)),
-          medication_duration_days: parseInt(formData.med_duration),
-          copay_tier_high: formData.copay_tier === 'high' ? 1 : 0,
-          copay_tier_medium: formData.copay_tier === 'medium' ? 1 : 0,
-          copay_tier_low: formData.copay_tier === 'low' ? 1 : 0,
-          gender_M: formData.gender === 'Male' ? 1 : 0,
-          gender_F: formData.gender === 'Female' ? 1 : 0
-        }
-      }, formData.password, parseInt(formData.num_meds), formData.dose_freq);
+          mental_health_flag: parsedMentalHealthFlag,
+          days_since_last_refill: parsedDaysSinceLastRefill,
+          missed_appointments: parsedMissedAppointments,
+          medication_changes: parsedMedicationChanges,
+          daily_dose_frequency: parsedDailyDoseFrequency,
+          medication_duration_days: parsedMedicationDurationDays,
+          copay_tier_high: parsedCopayTierHigh,
+          copay_tier_medium: parsedCopayTierMedium,
+          copay_tier_low: parsedCopayTierLow,
+          gender_M: parsedGenderM,
+          gender_F: parsedGenderF,
+        },
+      }, formData.password, parsedNumMeds, formData.dose_freq, medicationsList.length ? medicationsList : undefined);
 
-      // Save the generated ID so we can show it on the success screen
+      // Persist model outputs separately without overwriting historical prior_adherence
+      db.updatePatientPrediction(newPatient.patient_id, {
+        risk_score: Math.round(prediction.risk_percentage),
+        risk_level: prediction.risk_level,
+        adherence_probability: prediction.adherence_probability,
+        non_adherence_risk: prediction.non_adherence_risk,
+        risk_percentage: prediction.risk_percentage,
+        risk_factors: prediction.risk_factors,
+        protective_factors: prediction.protective_factors,
+        recommendations: prediction.recommendations,
+      });
+
+      setPredictionResult(prediction);
       setSuccessId(newPatient.patient_id);
-      // Log them in immediately by setting their ID in localStorage
       localStorage.setItem('active_patient_id', newPatient.patient_id);
-      
-      // Move to Step 5 (Success screen)
       setStep(5);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to connect to the prediction service.';
+      setError(message);
+    } finally {
       setLoading(false);
-    }, 1500); // 1.5 second artificial delay
+    }
   };
 
   // --- RENDER SUCCESS SCREEN (STEP 5) ---
@@ -163,10 +232,65 @@ export const PatientRegistration: React.FC = () => {
           <h2 className="text-2xl font-black text-slate-800 mb-2">Profile Created</h2>
           <p className="text-slate-500 mb-6">Welcome to MedAdhere AI, {formData.patient_name.split(' ')[0]}</p>
           
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-8">
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
             <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Your Patient ID</p>
             <p className="text-3xl font-mono font-black text-blue-600">{successId}</p>
           </div>
+
+          {predictionResult && (
+            <div className={`mb-6 rounded-xl border p-4 text-left ${predictionResult.risk_level === 'HIGH' ? 'border-red-200 bg-red-50' : predictionResult.risk_level === 'MEDIUM' ? 'border-amber-200 bg-amber-50' : 'border-green-200 bg-green-50'}`}>
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <p className="text-xs uppercase tracking-wider font-bold text-slate-500">Prediction</p>
+                <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold uppercase ${predictionResult.risk_level === 'HIGH' ? 'bg-red-100 text-red-700' : predictionResult.risk_level === 'MEDIUM' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                  {predictionResult.risk_level}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-sm text-slate-700">
+                <div>
+                  <p className="text-slate-500 text-xs uppercase tracking-wider">Risk %</p>
+                  <p className="font-bold text-lg">{predictionResult.risk_percentage.toFixed(2)}%</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs uppercase tracking-wider">Adherence</p>
+                  <p className="font-bold text-lg">{(predictionResult.adherence_probability * 100).toFixed(2)}%</p>
+                </div>
+              </div>
+
+              {predictionResult.risk_factors.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs uppercase tracking-wider font-bold text-slate-500 mb-2">Risk factors</p>
+                  <ul className="space-y-1 text-sm text-slate-700 list-disc list-inside">
+                    {predictionResult.risk_factors.slice(0, 3).map((factor) => (
+                      <li key={factor}>{factor}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {predictionResult.protective_factors.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs uppercase tracking-wider font-bold text-slate-500 mb-2">Protective factors</p>
+                  <ul className="space-y-1 text-sm text-slate-700 list-disc list-inside">
+                    {predictionResult.protective_factors.slice(0, 3).map((factor) => (
+                      <li key={factor}>{factor}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {predictionResult.recommendations.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs uppercase tracking-wider font-bold text-slate-500 mb-2">Recommendations</p>
+                  <ul className="space-y-1 text-sm text-slate-700 list-disc list-inside">
+                    {predictionResult.recommendations.slice(0, 3).map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
 
           <Button 
             onClick={() => navigate('/patient/dashboard')}
@@ -299,6 +423,37 @@ export const PatientRegistration: React.FC = () => {
                     <option value="Yes">Yes</option>
                   </select>
                 </div>
+
+                {/* Medication input section (dynamic) */}
+                <div className="pt-4 border-t border-slate-100">
+                  <h4 className="text-sm font-bold text-slate-700 mb-3">Current Medications</h4>
+                  {medicationsList.map((m, idx) => (
+                    <div key={idx} className="p-3 mb-3 border border-slate-100 rounded-lg bg-white">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium">Medication {idx+1}</div>
+                        <button type="button" onClick={() => removeMedicationRow(idx)} className="text-xs text-red-600">Remove</button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <input type="text" value={m.medicine_name || ''} onChange={(e) => updateMedicationField(idx, 'medicine_name', e.target.value)} placeholder="Medicine name (required)" className="p-2 border border-slate-200 rounded" />
+                        <input type="text" value={m.dose || ''} onChange={(e) => updateMedicationField(idx, 'dose', e.target.value)} placeholder="Dose (e.g. 500 mg)" className="p-2 border border-slate-200 rounded" />
+                      </div>
+                      <div className="mt-2 grid grid-cols-2 gap-3">
+                        <select value={m.frequency || 'Once daily'} onChange={(e) => updateMedicationField(idx, 'frequency', e.target.value)} className="p-2 border border-slate-200 rounded bg-white">
+                          <option value="Once daily">Once daily</option>
+                          <option value="Twice daily">Twice daily</option>
+                          <option value="Three times daily">Three times daily</option>
+                        </select>
+                        <input type="text" value={(m.scheduled_times || []).join(', ')} onChange={(e) => updateMedicationField(idx, 'scheduled_times', e.target.value.split(',').map(s => s.trim()))} placeholder="Times (comma separated, e.g. 08:00 AM, 08:00 PM)" className="p-2 border border-slate-200 rounded" />
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="text-sm">
+                    <button type="button" onClick={addMedicationRow} className="text-blue-600 font-bold">+ Add Medication</button>
+                    <p className="text-xs text-slate-500 mt-2">Provide the patient's current prescribed medications to personalize the schedule. This information is used for UI scheduling and does not affect the ML model.</p>
+                  </div>
+                </div>
+
               </div>
             )}
 

@@ -106,14 +106,10 @@ export const PatientLayout: React.FC = () => {
               <Bell size={20} />
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
             </button>
-            <button className="text-slate-500 hover:text-slate-700 transition-colors">
-              <HelpCircle size={20} />
-            </button>
-            
             <div className="flex items-center gap-3 pl-5 border-l border-slate-200">
-              <div className="w-9 h-9 rounded-full bg-slate-200 overflow-hidden">
+              <button type="button" onClick={() => navigate('/patient/profile')} className="w-9 h-9 rounded-full bg-slate-200 overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-300">
                 <img src="https://ui-avatars.com/api/?name=John+Doe&background=e2e8f0&color=475569" alt="User" className="w-full h-full object-cover" />
-              </div>
+              </button>
               <div className="hidden sm:block text-sm">
                 <p className="font-bold text-slate-800 leading-tight">John Doe</p>
                 <p className="text-slate-500 text-xs">Patient</p>
