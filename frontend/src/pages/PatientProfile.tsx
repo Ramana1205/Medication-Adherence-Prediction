@@ -26,6 +26,7 @@ export const PatientProfile: React.FC = () => {
           <div className="text-sm text-slate-500">{patient.patient_id}</div>
           <div className="text-sm text-slate-500 mt-2">Age: {patient.age}</div>
           <div className="text-sm text-slate-500 mt-1">Gender: {patient.gender}</div>
+          <div className="text-sm text-slate-500 mt-1">Condition: {patient.condition || 'Not specified'}</div>
         </div>
       </div>
 

@@ -50,7 +50,7 @@ export const DataManagement: React.FC = () => {
           <CardContent className="space-y-4">
             <div className="flex justify-between py-2 border-b border-slate-100">
               <span className="text-slate-500 text-sm">Source</span>
-              <span className="font-medium text-sm">Synthetic Demo Generator</span>
+              <span className="font-medium text-sm">Live Clinical Data</span>
             </div>
             <div className="flex justify-between py-2 border-b border-slate-100">
               <span className="text-slate-500 text-sm">Number of Records</span>

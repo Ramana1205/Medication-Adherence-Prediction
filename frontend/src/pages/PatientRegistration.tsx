@@ -32,6 +32,7 @@ export const PatientRegistration: React.FC = () => {
     patient_name: '', // Standard UI field
     age: '', // Maps to CSV: age
     gender: '', // Maps to CSV: gender_M, gender_F
+    condition: '',
     password: '', 
     confirmPassword: '',
     
@@ -63,6 +64,7 @@ export const PatientRegistration: React.FC = () => {
     if (!formData.patient_name.trim()) return "Please enter your name.";
     if (!formData.age || parseInt(formData.age) < 0 || parseInt(formData.age) > 120) return "Please enter a valid age.";
     if (!formData.gender) return "Please select a gender.";
+    if (!formData.condition.trim()) return "Please enter your disease or condition.";
     if (formData.password && formData.password !== formData.confirmPassword) return "Passwords do not match.";
     return null; // Return null if there are no errors
   };
@@ -221,6 +223,7 @@ export const PatientRegistration: React.FC = () => {
         patient_name: formData.patient_name,
         age: parsedAge,
         gender: formData.gender,
+        condition: formData.condition,
         chronic_conditions: parsedChronicConditions,
         previous_missed_doses: parsedMissedDoses,
         previous_missed_refills: Number(formData.missed_refills) || 0,
@@ -366,7 +369,7 @@ export const PatientRegistration: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
           
           {/* Header & Progress Bar container */}
-          <div className="bg-[#1e3a8a] p-6 text-white">
+          <div className="bg-[#78A4CB] p-6 text-white">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-2">
                 <HeartPulse size={24} />
@@ -424,7 +427,12 @@ export const PatientRegistration: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Set Password (Optional for Demo)</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Disease / Condition</label>
+                  <input type="text" name="condition" value={formData.condition} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3" placeholder="e.g. Hypertension, Type 2 Diabetes" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Set Password (Optional)</label>
                   <input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3" placeholder="Choose a password" />
                   <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Confirm password" />
                 </div>
@@ -593,7 +601,7 @@ export const PatientRegistration: React.FC = () => {
             <div className="mt-8 flex gap-3">
               {step < 4 ? (
                 // If not on final step, show Continue button
-                <Button onClick={handleNext} className="w-full bg-[#1e3a8a] hover:bg-[#172e6e] text-white py-3 flex items-center justify-center gap-2">
+                <Button onClick={handleNext} className="w-full bg-[#78A4CB] hover:bg-[#5d8bb5] text-white py-3 flex items-center justify-center gap-2">
                   Continue <ChevronRight size={18} />
                 </Button>
               ) : (
@@ -611,14 +619,14 @@ export const PatientRegistration: React.FC = () => {
                   onClick={() => {
                     // Instantly populate the form with mock data to save typing time during presentation
                     setFormData({
-                      patient_name: 'Demo Patient', age: '45', gender: 'Female', password: '', confirmPassword: '',
+                      patient_name: 'Demo Patient', age: '45', gender: 'Female', condition: 'Type 2 Diabetes', password: '', confirmPassword: '',
                       chronic_conditions: '2', num_meds: '3', dose_freq: 'Twice daily', med_duration: '365', mental_health: 'No',
                       missed_doses: '4', missed_refills: '1', days_since_last_refill: '14', refill_gap: '5', copay_tier: 'medium', missed_appointments: '0', med_changes: 'No'
                     });
                   }}
                   className="text-xs text-blue-600 hover:underline font-bold"
                 >
-                  Quick Fill (Synthetic Data Demo)
+                  Quick Fill
                 </button>
               </div>
             )}

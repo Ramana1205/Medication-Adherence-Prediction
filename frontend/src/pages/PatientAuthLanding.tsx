@@ -59,7 +59,7 @@ export const PatientAuthLanding: React.FC = () => {
             {/* Navigates to the PatientLogin screen */}
             <Button 
               onClick={() => navigate('/patient/login')}
-              className="w-full bg-[#1e3a8a] hover:bg-[#172e6e] text-white"
+              className="w-full bg-[#78A4CB] hover:bg-[#5d8bb5] text-white"
             >
               Continue as Existing
             </Button>

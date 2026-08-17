@@ -35,7 +35,7 @@ export const PatientDetail: React.FC = () => {
         </button>
         <div>
           <h1 className="text-2xl font-bold text-slate-800">{patient.patient_name} — {patient.patient_id}</h1>
-          <p className="text-sm text-slate-500">Age: {patient.age} • Gender: {patient.gender} • Chronic Conditions: {patient.chronic_conditions}</p>
+          <p className="text-sm text-slate-500">Age: {patient.age} • Gender: {patient.gender} • Condition: {patient.condition || 'Not specified'} • Chronic Conditions: {patient.chronic_conditions}</p>
         </div>
       </div>
 
@@ -223,10 +223,10 @@ export const PatientDetail: React.FC = () => {
         </Card>
 
         {/* Recommended Intervention */}
-        <Card className="shadow-sm border-slate-200 border-t-4 border-t-[#1e3a8a]">
+        <Card className="shadow-sm border-slate-200 border-t-4 border-t-[#78A4CB]">
           <CardHeader className="pb-2 border-b border-slate-100">
             <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
-              <Activity size={18} className="text-[#1e3a8a]" /> Recommended Support
+              <Activity size={18} className="text-[#78A4CB]" /> Recommended Support
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
@@ -247,7 +247,7 @@ export const PatientDetail: React.FC = () => {
 
             <div className="flex gap-3">
               {interventionStatus === 'Pending' && (
-                <Button className="w-full bg-[#1e3a8a] hover:bg-[#172e6e]" onClick={() => {
+                <Button className="w-full bg-[#78A4CB] hover:bg-[#5d8bb5]" onClick={() => {
                   // Persist intervention
                   db.addIntervention(patient.patient_id, 'Evening reminder', 'Provide an evening medication reminder.', 'Dr. Sharma');
                   setInterventionStatus('In Progress');

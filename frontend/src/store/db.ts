@@ -24,7 +24,7 @@ const AUTH_KEY = 'medadhere_auth_session';
 
 const seedDoctor = {
   doctor_id: 'DOC001',
-  name: 'Dr. Sarah Johnson',
+  name: 'Dr. Sharma',
   email: 'doctor@medadhere.ai',
   password_hash: btoa('Doctor@123'),
   role: 'DOCTOR'
@@ -461,6 +461,7 @@ class Database {
       patient_name: patientData.patient_name || 'New Patient',
       age: patientData.age || 0,
       gender: patientData.gender || 'Unknown',
+      condition: patientData.condition || 'Not specified',
       chronic_conditions: patientData.chronic_conditions || 0,
       num_meds: medsCount,
       prior_adherence: adherence,
@@ -539,6 +540,7 @@ class Database {
       patient_name: newPatient.patient_name,
       age: newPatient.age,
       gender: newPatient.gender,
+      condition: newPatient.condition,
       chronic_conditions: newPatient.chronic_conditions,
       num_meds: newPatient.num_meds,
       prior_adherence: newPatient.prior_adherence,

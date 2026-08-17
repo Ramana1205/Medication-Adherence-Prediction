@@ -10,7 +10,7 @@ export default {
         background: '#f8fafc',
         foreground: '#0f172a',
         primary: {
-          DEFAULT: '#1e3a8a', // deep blue
+          DEFAULT: '#78A4CB',
           foreground: '#ffffff',
         },
         accent: {

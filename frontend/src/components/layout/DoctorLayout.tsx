@@ -89,14 +89,14 @@ export const DoctorLayout: React.FC = () => {
         <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1.5">
           <button 
             onClick={() => navigate('/doctor/dashboard')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/dashboard') ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/dashboard') ? 'bg-[#78A4CB] text-white shadow-md' : 'hover:bg-slate-800 hover:text-white'}`}
           >
             <LayoutDashboard size={18} /> Dashboard
           </button>
           
           <button 
             onClick={() => navigate('/doctor/patients')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/patients') || isActive('/patient/') ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-slate-800 hover:text-white'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/patients') || isActive('/patient/') ? 'bg-[#78A4CB] text-white shadow-md' : 'hover:bg-slate-800 hover:text-white'}`}
           >
             <Users size={18} /> My Patients
           </button>

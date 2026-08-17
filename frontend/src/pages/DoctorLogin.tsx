@@ -51,7 +51,7 @@ export const DoctorLogin: React.FC = () => {
           {error && <div className="text-sm text-red-600">{error}</div>}
 
           <div className="flex items-center justify-between">
-            <Button type="submit" className="bg-[#1e3a8a] text-white px-4 py-2">Login</Button>
+            <Button type="submit" className="bg-[#78A4CB] hover:bg-[#5d8bb5] text-white px-4 py-2">Login</Button>
           </div>
         </form>
       </div>

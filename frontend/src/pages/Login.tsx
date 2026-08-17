@@ -23,7 +23,7 @@ export const Login: React.FC = () => {
         {/* LEFT SIDE: BRANDING PANEL (Dark Blue) */}
         {/* ========================================= */}
         {/* Takes up 50% width on medium+ screens, flex column, dark blue background #1e3a8a */}
-        <div className="md:w-1/2 bg-[#1e3a8a] p-12 flex flex-col items-center justify-center text-white text-center">
+        <div className="md:w-1/2 bg-[#78A4CB] p-12 flex flex-col items-center justify-center text-white text-center">
           
           {/* Logo container: slight white opacity with backdrop blur for a glassmorphism effect */}
           <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-sm mb-6 shadow-inner">
@@ -82,7 +82,7 @@ export const Login: React.FC = () => {
               {/* Button: Routes directly to Doctor Dashboard, simulating an instant login for hackathon evaluation */}
               <Button 
                               onClick={() => navigate('/doctor/login')}
-                className="w-full bg-[#1e3a8a] hover:bg-[#172e6e] text-white py-6"
+                className="w-full bg-[#78A4CB] hover:bg-[#5d8bb5] text-white py-6"
               >
                               Doctor Login
               </Button>

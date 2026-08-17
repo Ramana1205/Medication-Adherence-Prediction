@@ -72,7 +72,7 @@ export const PatientChat: React.FC = () => {
           ) : (
             messages.map(m => (
               <div key={m.id} className={`mb-3 ${m.sender === 'patient' ? 'text-right' : 'text-left'}`}>
-                <div className={`inline-block p-2 rounded ${m.sender === 'patient' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-800'}`}>
+                <div className={`inline-block p-2 rounded ${m.sender === 'patient' ? 'bg-[#78A4CB] text-white' : 'bg-slate-100 text-slate-800'}`}>
                   {m.message}
                 </div>
                 <div className="text-xs text-slate-400 mt-1">{new Date(m.timestamp).toLocaleString()}</div>
@@ -93,7 +93,7 @@ export const PatientChat: React.FC = () => {
           <button 
             onClick={send} 
             disabled={sending}
-            className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+            className="bg-[#78A4CB] hover:bg-[#5d8bb5] text-white px-4 py-2 rounded disabled:opacity-50"
           >
             {sending ? 'Sending...' : 'Send'}
           </button>

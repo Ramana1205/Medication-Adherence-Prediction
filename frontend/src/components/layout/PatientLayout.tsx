@@ -18,15 +18,15 @@ export const PatientLayout: React.FC = () => {
         
         {/* Logo */}
         <div className="h-16 flex items-center px-6 border-b border-slate-200 cursor-pointer" onClick={() => navigate('/patient-portal')}>
-          <div className="text-[#1e3a8a] mr-2">
+          <div className="text-[#78A4CB] mr-2">
             <HeartPulse size={28} strokeWidth={2.5} />
           </div>
-          <span className="font-bold text-xl tracking-tight text-[#1e3a8a]">Medivia</span>
+          <span className="font-bold text-xl tracking-tight text-[#78A4CB]">Medivia</span>
         </div>
 
         {/* Links */}
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 bg-[#1e3a8a] text-white rounded-lg text-sm font-medium">
+          <button className="w-full flex items-center gap-3 px-3 py-2.5 bg-[#78A4CB] text-white rounded-lg text-sm font-medium">
             <LayoutDashboard size={18} />
             Dashboard
           </button>
@@ -74,12 +74,12 @@ export const PatientLayout: React.FC = () => {
 
         {/* Need Help Card */}
         <div className="p-4">
-          <div className="bg-[#f8faff] border border-blue-100 rounded-xl p-4">
-            <h4 className="font-semibold text-[#1e3a8a] text-sm mb-1">Need Help?</h4>
+          <div className="bg-[#f8faff] border border-[#78A4CB]/30 rounded-xl p-4">
+            <h4 className="font-semibold text-[#78A4CB] text-sm mb-1">Need Help?</h4>
             <p className="text-xs text-slate-500 mb-3 leading-relaxed">
               Contact your care team for any questions or support.
             </p>
-            <Button className="w-full bg-[#1e3a8a] hover:bg-[#1e3a8a]/90 text-xs h-9" size="sm">
+            <Button className="w-full bg-[#78A4CB] hover:bg-[#5d8bb5] text-xs h-9" size="sm">
               <Phone size={14} className="mr-2" /> Contact Care Team
             </Button>
           </div>

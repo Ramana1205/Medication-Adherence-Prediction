@@ -13,8 +13,7 @@ import { db } from '../store/db';
 export const PatientLogin: React.FC = () => {
   // Initialize the navigate hook
   const navigate = useNavigate();
-  // State: Stores the Patient ID input (defaults to 'P0001' for easy hackathon demo)
-  const [patientId, setPatientId] = useState('P0001');
+  const [patientId, setPatientId] = useState('');
   // State: Stores the password input
   const [password, setPassword] = useState('');
   // State: Stores validation/auth error messages to display
@@ -55,12 +54,6 @@ export const PatientLogin: React.FC = () => {
         setLoading(false); // Stop loading state
       }
     }, 600); // 600ms artificial delay
-  };
-
-  // Helper function specifically for the hackathon to quickly load demo credentials
-  const loadDemoPatient = () => {
-    setPatientId('P0001'); // Auto-fill the first patient from the CSV
-    setPassword(''); // Demo patients don't have passwords initially
   };
 
   return (
@@ -112,9 +105,9 @@ export const PatientLogin: React.FC = () => {
               value={patientId}
               // Update state on every keystroke
               onChange={(e) => setPatientId(e.target.value)}
-              // font-mono is used here to make IDs (e.g. P0001) easier to read
+              // font-mono is used here to make IDs easier to read
               className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-              placeholder="e.g. P0001"
+              placeholder="e.g. P004001"
             />
           </div>
           
@@ -127,7 +120,7 @@ export const PatientLogin: React.FC = () => {
               // Update state on every keystroke
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Leave blank for synthetic demo patients"
+              placeholder="Optional password"
             />
           </div>
 
@@ -135,24 +128,12 @@ export const PatientLogin: React.FC = () => {
           <Button 
             type="submit"
             disabled={loading} // Prevent multiple clicks while authenticating
-            className="w-full bg-[#1e3a8a] hover:bg-[#172e6e] text-white py-3 mt-4"
+            className="w-full bg-[#78A4CB] hover:bg-[#5d8bb5] text-white py-3 mt-4"
           >
             {/* Change text dynamically based on loading state */}
             {loading ? 'Authenticating...' : 'Login'}
           </Button>
         </form>
-
-        {/* --- HACKATHON DEMO HELPER SECTION --- */}
-        <div className="mt-8 pt-6 border-t border-slate-100">
-          <p className="text-xs text-center text-slate-400 mb-3 uppercase tracking-wider font-bold">Hackathon Demo Mode</p>
-          {/* Clicking this button instantly populates the form with a known working ID */}
-          <button 
-            onClick={loadDemoPatient}
-            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-lg text-sm font-bold transition-colors"
-          >
-            Load Sample Patient Data (P0001)
-          </button>
-        </div>
 
       </div>
     </div>

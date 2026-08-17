@@ -156,6 +156,12 @@ export const PatientDashboard: React.FC = () => {
   
   const getMedName = (medId: string) => meds.find(m => m.medicine_id === medId)?.medicine_name || 'Unknown';
   const getMedFreq = (medId: string) => meds.find(m => m.medicine_id === medId)?.frequency || '';
+  const getSkipReasonForSlot = (slot: MedicationSlot) => {
+    const event = (db as any).state?.events?.find(
+      (e: any) => e.patient_id === patient?.patient_id && e.medicine_id === slot.medicine_id && e.scheduled_time === slot.scheduled_time && e.date === slot.date
+    );
+    return event?.skip_reason || 'No reason recorded';
+  };
 
   // Month navigation state
   const today = new Date();
@@ -369,7 +375,7 @@ export const PatientDashboard: React.FC = () => {
           <span className="font-bold text-xl text-slate-800 tracking-tight">Medivia</span>
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={() => setShowAdherence(true)} className="hidden sm:flex items-center gap-2 text-sm font-bold bg-[#1e3a8a] text-white px-4 py-2 rounded-lg hover:bg-[#172e6e] transition-colors shadow-sm">
+          <button onClick={() => setShowAdherence(true)} className="hidden sm:flex items-center gap-2 text-sm font-bold bg-[#78A4CB] text-white px-4 py-2 rounded-lg hover:bg-[#5d8bb5] transition-colors shadow-sm">
             Check Adherence
           </button>
             
@@ -497,7 +503,7 @@ export const PatientDashboard: React.FC = () => {
                 <p className="text-xs text-slate-600 mt-1">Chat with your Doctor</p>
               </div>
             </div>
-            <button onClick={() => navigate('/patient/chat')} className="w-full bg-[#1e3a8a] hover:bg-[#172e6e] text-white text-xs font-bold py-2.5 rounded-lg transition-colors">
+            <button onClick={() => navigate('/patient/chat')} className="w-full bg-[#78A4CB] hover:bg-[#5d8bb5] text-white text-xs font-bold py-2.5 rounded-lg transition-colors">
               Chat Now
             </button>
           </div>
@@ -574,7 +580,7 @@ export const PatientDashboard: React.FC = () => {
                               <XCircle size={18} />
                               <span className="text-sm font-bold">SKIPPED</span>
                             </div>
-                            <p className="text-xs font-medium text-slate-500">Reason: Recorded as missed</p>
+                            <p className="text-xs font-medium text-slate-500">Reason: {getSkipReasonForSlot(slot)}</p>
                           </div>
                         )}
 

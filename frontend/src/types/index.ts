@@ -17,6 +17,8 @@ export interface Patient {
   age: number;
   // Patient's gender (Male/Female/Other)
   gender: string;
+  // Primary diagnosed disease or condition, if available
+  condition?: string;
   // Total number of chronic conditions (e.g., Diabetes, Hypertension)
   chronic_conditions: number;
   // Number of active medications the patient is currently prescribed
