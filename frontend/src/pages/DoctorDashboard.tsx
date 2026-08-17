@@ -212,7 +212,7 @@ export const DoctorDashboard: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="text-xs text-slate-500 italic mt-2">AI-generated risk assessment for decision support. Clinical judgment should be used.</div>
+
                 </div>
               )}
             </CardContent>
@@ -224,9 +224,8 @@ export const DoctorDashboard: React.FC = () => {
         
         {/* Risk Distribution */}
         <Card className="shadow-sm border-slate-200">
-          <CardHeader className="pb-0 flex flex-row items-center justify-between border-b border-slate-100 mb-4">
+          <CardHeader className="pb-0 border-b border-slate-100 mb-4">
             <CardTitle className="text-base font-bold text-slate-800">Risk Distribution</CardTitle>
-            <button className="text-xs font-semibold text-blue-600 hover:underline">View All</button>
           </CardHeader>
           <CardContent className="flex items-center justify-between">
             <div className="w-40 h-40">
@@ -262,8 +261,12 @@ export const DoctorDashboard: React.FC = () => {
           <CardHeader className="pb-0 flex flex-row items-center justify-between border-b border-slate-100 mb-4">
             <CardTitle className="text-base font-bold text-slate-800">Adherence Trend <span className="text-slate-400 font-normal text-sm ml-1">(Monthly)</span></CardTitle>
             <select className="text-xs border border-slate-200 rounded px-2 py-1 text-slate-600 bg-slate-50">
+              <option>Last 1 Month</option>
+              <option>Last 2 Months</option>
+              <option>Last 3 Months</option>
+              <option>Last 4 Months</option>
+              <option>Last 5 Months</option>
               <option>Last 6 Months</option>
-              <option>Last 12 Months</option>
             </select>
           </CardHeader>
           <CardContent>
@@ -292,9 +295,8 @@ export const DoctorDashboard: React.FC = () => {
         
         {/* Early Warning Alerts */}
         <Card className="shadow-sm border-slate-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 border-b border-slate-100">
+          <CardHeader className="pb-2 border-b border-slate-100">
             <CardTitle className="text-base font-bold text-slate-800">Early Warning Alerts</CardTitle>
-            <button className="text-xs font-semibold text-blue-600 hover:underline">View All Alerts</button>
           </CardHeader>
           <CardContent className="pt-0 px-0">
             <table className="w-full text-sm text-left">

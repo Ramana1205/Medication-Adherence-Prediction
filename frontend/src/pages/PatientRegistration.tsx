@@ -76,10 +76,17 @@ export const PatientRegistration: React.FC = () => {
     // If the user added medications, validate each
     for (let i = 0; i < medicationsList.length; i++) {
       const m = medicationsList[i];
+      const requiredTimes = getRequiredScheduleTimes(m.frequency || 'Once daily');
       if (!m.medicine_name || !m.medicine_name.trim()) return `Please enter a medicine name for medication ${i+1}.`;
       if (!m.dose || !m.dose.trim()) return `Please enter a dose for medication ${i+1}.`;
       if (!m.frequency) return `Please select a frequency for medication ${i+1}.`;
-      if (!m.scheduled_times || m.scheduled_times.length === 0) return `Please add at least one schedule time for medication ${i+1}.`;
+      const scheduledTimes = Array.isArray(m.scheduled_times) ? m.scheduled_times.filter(Boolean) : [];
+      if (scheduledTimes.length !== requiredTimes.length) {
+        return `Medication ${i+1} requires ${requiredTimes.length} schedule time(s) for ${m.frequency}.`;
+      }
+      if (scheduledTimes.some(time => !time.trim())) {
+        return `Please enter valid schedule times for medication ${i+1}.`;
+      }
     }
     return null;
   };
@@ -117,11 +124,43 @@ export const PatientRegistration: React.FC = () => {
     setError(''); // Clear any errors
   };
 
+  const getRequiredScheduleTimes = (frequency: string) => {
+    if (frequency === 'Twice daily') return ['08:00 AM', '08:00 PM'];
+    if (frequency === 'Three times daily') return ['08:00 AM', '01:00 PM', '08:00 PM'];
+    return ['08:00 AM'];
+  };
+
+  const normalizeMedicationSchedule = (med: Partial<Medication>): string[] => {
+    const requirement = getRequiredScheduleTimes(med.frequency || 'Once daily');
+    const provided = Array.isArray(med.scheduled_times) ? med.scheduled_times.filter(Boolean) : [];
+    const normalized = provided.length ? provided : requirement;
+    return requirement.map((slot, index) => normalized[index] || slot);
+  };
+
   // Helpers for medication rows
   const addMedicationRow = () => setMedicationsList(prev => [...prev, { medicine_name: '', dose: '', frequency: 'Once daily', scheduled_times: ['08:00 AM'] }]);
   const removeMedicationRow = (index: number) => setMedicationsList(prev => prev.filter((_, i) => i !== index));
   const updateMedicationField = (index: number, field: keyof Partial<Medication>, value: any) => {
-    setMedicationsList(prev => prev.map((m, i) => i === index ? { ...m, [field]: value } : m));
+    setMedicationsList(prev => prev.map((m, i) => {
+      if (i !== index) return m;
+      if (field === 'frequency') {
+        return { ...m, frequency: String(value), scheduled_times: getRequiredScheduleTimes(String(value)) };
+      }
+      if (field === 'scheduled_times') {
+        const next = Array.isArray(value) ? value.map(v => String(v).trim()).filter(Boolean) : [];
+        return { ...m, scheduled_times: next.length ? next : getRequiredScheduleTimes(m.frequency || 'Once daily') };
+      }
+      return { ...m, [field]: value };
+    }));
+  };
+
+  const updateMedicationTime = (rowIndex: number, timeIndex: number, value: string) => {
+    setMedicationsList(prev => prev.map((med, idx) => {
+      if (idx !== rowIndex) return med;
+      const schedule = [...(med.scheduled_times || getRequiredScheduleTimes(med.frequency || 'Once daily'))];
+      schedule[timeIndex] = value;
+      return { ...med, scheduled_times: schedule };
+    }));
   };
 
   // Function called on Step 4 to finalize registration
@@ -172,6 +211,12 @@ export const PatientRegistration: React.FC = () => {
         copay_tier_medium: parsedCopayTierMedium,
       });
 
+      const normalizedMedicationList = medicationsList.map((med) => ({
+        ...med,
+        frequency: med.frequency || 'Once daily',
+        scheduled_times: normalizeMedicationSchedule(med),
+      }));
+
       const newPatient = db.registerNewPatient({
         patient_name: formData.patient_name,
         age: parsedAge,
@@ -195,7 +240,9 @@ export const PatientRegistration: React.FC = () => {
           gender_M: parsedGenderM,
           gender_F: parsedGenderF,
         },
-      }, formData.password, parsedNumMeds, formData.dose_freq, medicationsList.length ? medicationsList : undefined);
+      }, formData.password, parsedNumMeds, formData.dose_freq, normalizedMedicationList.length ? normalizedMedicationList : undefined);
+
+      await db.refreshPatientMedications(newPatient.patient_id);
 
       // Persist model outputs separately without overwriting historical prior_adherence
       db.updatePatientPrediction(newPatient.patient_id, {
@@ -443,14 +490,28 @@ export const PatientRegistration: React.FC = () => {
                           <option value="Twice daily">Twice daily</option>
                           <option value="Three times daily">Three times daily</option>
                         </select>
-                        <input type="text" value={(m.scheduled_times || []).join(', ')} onChange={(e) => updateMedicationField(idx, 'scheduled_times', e.target.value.split(',').map(s => s.trim()))} placeholder="Times (comma separated, e.g. 08:00 AM, 08:00 PM)" className="p-2 border border-slate-200 rounded" />
+                        <div className="text-xs text-slate-500 self-center">{(m.frequency || 'Once daily')} schedule</div>
+                      </div>
+
+                      <div className="mt-3 space-y-2">
+                        {(m.scheduled_times || getRequiredScheduleTimes(m.frequency || 'Once daily')).map((time, timeIndex) => (
+                          <div key={`${idx}-${timeIndex}`} className="flex items-center gap-2">
+                            <label className="w-20 text-xs font-medium text-slate-600">Time {timeIndex + 1}</label>
+                            <input
+                              type="text"
+                              value={time}
+                              onChange={(e) => updateMedicationTime(idx, timeIndex, e.target.value)}
+                              placeholder={getRequiredScheduleTimes(m.frequency || 'Once daily')[timeIndex] || '08:00 AM'}
+                              className="flex-1 p-2 border border-slate-200 rounded"
+                            />
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}
 
                   <div className="text-sm">
                     <button type="button" onClick={addMedicationRow} className="text-blue-600 font-bold">+ Add Medication</button>
-                    <p className="text-xs text-slate-500 mt-2">Provide the patient's current prescribed medications to personalize the schedule. This information is used for UI scheduling and does not affect the ML model.</p>
                   </div>
                 </div>
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Search, Bell, User } from 'lucide-react';
+import { Menu, Bell, User } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 
 interface TopNavProps {
@@ -16,14 +16,6 @@ export const TopNav: React.FC<TopNavProps> = ({ setSidebarOpen }) => {
         >
           <Menu size={20} />
         </button>
-        <div className="hidden md:flex relative w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="Search patients by ID, Risk, or Plan..."
-            className="w-full h-10 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-          />
-        </div>
       </div>
 
       <div className="flex items-center gap-4">

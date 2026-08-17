@@ -46,20 +46,20 @@ export const PatientDashboard: React.FC = () => {
   const [showNotifs, setShowNotifs] = useState(false);
   const [patientNotifications, setPatientNotifications] = useState<Notification[]>([]);
 
-  const loadData = () => {
+  const loadData = async () => {
     const activeId = localStorage.getItem('active_patient_id');
     if (!activeId) {
       navigate('/patient/auth');
       return;
     }
-    
+
     const p = db.getPatient(activeId);
     if (p) {
       setPatient(p);
-      setMeds(db.getMedications(p.patient_id));
+      const patientMeds = await db.refreshPatientMedications(p.patient_id);
+      setMeds(patientMeds);
       setSlots(db.getTodaySlots(p.patient_id));
     } else {
-      // Fallback
       localStorage.removeItem('active_patient_id');
       navigate('/patient/auth');
     }
@@ -67,7 +67,7 @@ export const PatientDashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, []);
 
   const handleTookMedicine = (slotId: string) => {

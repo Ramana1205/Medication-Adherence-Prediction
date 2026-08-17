@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { db } from '../store/db';
 import { Message } from '../types';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
 export const PatientChat: React.FC = () => {
   const navigate = useNavigate();
@@ -53,7 +54,15 @@ export const PatientChat: React.FC = () => {
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Chat with your Doctor</h2>
+      <div className="mb-6">
+        <button 
+          onClick={() => navigate('/patient/dashboard')}
+          className="flex items-center gap-2 text-slate-600 hover:text-slate-800 transition-colors mb-4"
+        >
+          <ArrowLeft size={16} /> Back to Patient Dashboard
+        </button>
+        <h1 className="text-3xl font-bold text-slate-800">Chat with your Doctor</h1>
+      </div>
       <div className="border rounded-lg bg-white p-4 max-w-2xl">
         <div className="max-h-80 overflow-auto mb-4">
           {loading && messages.length === 0 ? (

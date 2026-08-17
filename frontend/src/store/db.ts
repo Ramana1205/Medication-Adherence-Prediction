@@ -64,8 +64,42 @@ class Database {
       this.state.notifications = notifications || this.state.notifications;
       this.state.messages = messages || this.state.messages;
       this.state.interventions = interventions || this.state.interventions;
+      await this.refreshAllMedications();
     } catch (error) {
       console.warn('Unable to load shared data from backend; using in-memory fallback.', error);
+    }
+  }
+
+  async refreshAllMedications(): Promise<Medication[]> {
+    const patientIds = this.state.patients.map(p => p.patient_id);
+    if (!patientIds.length) {
+      this.state.medications = [];
+      return [];
+    }
+
+    try {
+      const medicationLists = await Promise.all(
+        patientIds.map(patientId =>
+          api.get<Medication[]>(`/patients/${patientId}/medications`).catch(() => this.state.medications.filter(m => m.patient_id === patientId))
+        )
+      );
+      const allMeds = medicationLists.flat();
+      this.state.medications = allMeds;
+      return allMeds;
+    } catch (error) {
+      console.warn('Unable to refresh medications from backend:', error);
+      return this.state.medications.slice();
+    }
+  }
+
+  async refreshPatientMedications(patientId: string): Promise<Medication[]> {
+    try {
+      const meds = await api.get<Medication[]>(`/patients/${patientId}/medications`);
+      this.state.medications = this.state.medications.filter(m => m.patient_id !== patientId).concat(meds || []);
+      return meds || [];
+    } catch (error) {
+      console.warn(`Failed to refresh medications for patient ${patientId}:`, error);
+      return this.state.medications.filter(m => m.patient_id === patientId);
     }
   }
 
@@ -466,6 +500,8 @@ class Database {
 
     return newPatient;
   }
+
+  getAllMedications() { return this.state.medications.slice(); }
 
   getMedications(patientId: string) { return this.state.medications.filter(m => m.patient_id === patientId); }
 

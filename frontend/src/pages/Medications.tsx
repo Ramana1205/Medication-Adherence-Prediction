@@ -5,9 +5,12 @@ export const Medications: React.FC = () => {
   const [meds, setMeds] = useState<any[]>([]);
 
   useEffect(() => {
-    // collect all medications
-    const all = (db as any).state?.medications || [];
-    setMeds(all);
+    const loadMeds = async () => {
+      const all = await db.refreshAllMedications();
+      setMeds(all);
+    };
+
+    void loadMeds();
   }, []);
 
   return (

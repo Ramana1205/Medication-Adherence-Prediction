@@ -92,12 +92,6 @@ export const PatientAuthLanding: React.FC = () => {
 
         </div>
 
-        {/* Small disclaimer text for the hackathon */}
-        <div className="text-center text-xs text-slate-400 bg-slate-50 p-4 rounded-lg">
-          <p><strong>Note:</strong> Your information is used only for this medication-adherence support prototype.</p>
-          <p className="mt-1">Please use synthetic/demo data for the hackathon evaluation.</p>
-        </div>
-
       </div>
     </div>
   );
