@@ -53,17 +53,42 @@ export const PatientDashboard: React.FC = () => {
       return;
     }
 
-    const p = db.getPatient(activeId);
-    if (p) {
-      setPatient(p);
-      const patientMeds = await db.refreshPatientMedications(p.patient_id);
+    try {
+      const patientFromStore = db.getPatient(activeId) || await db.fetchPatientById(activeId);
+      if (!patientFromStore) {
+        localStorage.removeItem('active_patient_id');
+        navigate('/patient/auth');
+        return;
+      }
+
+      const [patientMeds, patientEvents] = await Promise.all([
+        db.refreshPatientMedications(patientFromStore.patient_id),
+        db.refreshPatientEvents(patientFromStore.patient_id),
+      ]);
+
+      setPatient(patientFromStore);
       setMeds(patientMeds);
-      setSlots(db.getTodaySlots(p.patient_id));
-    } else {
-      localStorage.removeItem('active_patient_id');
-      navigate('/patient/auth');
+      setSlots(db.getTodaySlots(patientFromStore.patient_id));
+
+      if (patientEvents.length > 0) {
+        (db as any).state.events = (db as any).state.events
+          .filter((event: any) => event.patient_id !== patientFromStore.patient_id)
+          .concat(patientEvents);
+      }
+    } catch (error) {
+      console.error('Failed to hydrate patient data from backend:', error);
+      const fallbackPatient = db.getPatient(activeId);
+      if (fallbackPatient) {
+        setPatient(fallbackPatient);
+        setMeds(db.getMedications(fallbackPatient.patient_id));
+        setSlots(db.getTodaySlots(fallbackPatient.patient_id));
+      } else {
+        localStorage.removeItem('active_patient_id');
+        navigate('/patient/auth');
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {

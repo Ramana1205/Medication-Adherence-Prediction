@@ -64,9 +64,29 @@ class Database {
       this.state.notifications = notifications || this.state.notifications;
       this.state.messages = messages || this.state.messages;
       this.state.interventions = interventions || this.state.interventions;
-      await this.refreshAllMedications();
+      await Promise.all([
+        this.refreshAllMedications(),
+        this.refreshAllEvents(),
+      ]);
     } catch (error) {
       console.warn('Unable to load shared data from backend; using in-memory fallback.', error);
+    }
+  }
+
+  async fetchPatientById(patientId: string): Promise<Patient | null> {
+    try {
+      const patient = await api.get<Patient>(`/patients/${patientId}`);
+      if (!patient) return null;
+      const existing = this.state.patients.find(p => p.patient_id === patientId);
+      if (existing) {
+        Object.assign(existing, patient);
+      } else {
+        this.state.patients.push(patient);
+      }
+      return patient;
+    } catch (error) {
+      console.warn(`Failed to fetch patient ${patientId} from backend:`, error);
+      return this.getPatient(patientId) || null;
     }
   }
 
@@ -92,6 +112,28 @@ class Database {
     }
   }
 
+  async refreshAllEvents(): Promise<MedicationEvent[]> {
+    const patientIds = this.state.patients.map(p => p.patient_id);
+    if (!patientIds.length) {
+      this.state.events = [];
+      return [];
+    }
+
+    try {
+      const eventLists = await Promise.all(
+        patientIds.map(patientId =>
+          api.get<MedicationEvent[]>(`/patients/${patientId}/events`).catch(() => this.state.events.filter(e => e.patient_id === patientId))
+        )
+      );
+      const allEvents = eventLists.flat();
+      this.state.events = allEvents;
+      return allEvents;
+    } catch (error) {
+      console.warn('Unable to refresh medication events from backend:', error);
+      return this.state.events.slice();
+    }
+  }
+
   async refreshPatientMedications(patientId: string): Promise<Medication[]> {
     try {
       const meds = await api.get<Medication[]>(`/patients/${patientId}/medications`);
@@ -100,6 +142,17 @@ class Database {
     } catch (error) {
       console.warn(`Failed to refresh medications for patient ${patientId}:`, error);
       return this.state.medications.filter(m => m.patient_id === patientId);
+    }
+  }
+
+  async refreshPatientEvents(patientId: string): Promise<MedicationEvent[]> {
+    try {
+      const events = await api.get<MedicationEvent[]>(`/patients/${patientId}/events`);
+      this.state.events = this.state.events.filter(e => e.patient_id !== patientId).concat(events || []);
+      return events || [];
+    } catch (error) {
+      console.warn(`Failed to refresh medication events for patient ${patientId}:`, error);
+      return this.state.events.filter(e => e.patient_id === patientId);
     }
   }
 
@@ -505,9 +558,38 @@ class Database {
 
   getMedications(patientId: string) { return this.state.medications.filter(m => m.patient_id === patientId); }
 
+  private deriveSlotsForPatient(patientId: string, date: string = new Date().toISOString().split('T')[0]): MedicationSlot[] {
+    const meds = this.getMedications(patientId);
+    const eventMap = new Map(
+      this.state.events
+        .filter(e => e.patient_id === patientId && e.date === date)
+        .map((event) => [`${event.medicine_id}|${event.scheduled_time}`, event])
+    );
+
+    const slots = meds.flatMap((med) => {
+      const schedule = Array.isArray(med.scheduled_times) ? med.scheduled_times : [med.scheduled_times];
+      return schedule
+        .filter(Boolean)
+        .map((scheduledTime, index) => {
+          const key = `${med.medicine_id}|${scheduledTime}`;
+          const event = eventMap.get(key);
+          return {
+            slot_id: event?.slot_id || `S-${med.medicine_id}-${date}-${index}-${String(scheduledTime).replace(/[^a-zA-Z0-9]/g, '')}`,
+            patient_id: patientId,
+            medicine_id: med.medicine_id,
+            date,
+            scheduled_time: scheduledTime,
+            status: event?.status || 'PENDING',
+          } as MedicationSlot;
+        });
+    });
+
+    this.state.slots = this.state.slots.filter(s => !(s.patient_id === patientId && s.date === date)).concat(slots);
+    return slots;
+  }
+
   getTodaySlots(patientId: string) {
-    const today = new Date().toISOString().split('T')[0];
-    return this.state.slots.filter(s => s.patient_id === patientId && s.date === today);
+    return this.deriveSlotsForPatient(patientId);
   }
 
   getEventsForPatientOnDate(patientId: string, date: string) {
@@ -515,9 +597,8 @@ class Database {
   }
 
   logMedicationEvent(slotId: string, status: MedicationStatus, skipReason?: string) {
-    const slot = this.state.slots.find(s => s.slot_id === slotId);
+    const slot = this.state.slots.find(s => s.slot_id === slotId) || this.deriveSlotsForPatient(this.state.medications.find(m => m.medicine_id === slotId.split('-')[1])?.patient_id || this.state.events.find(e => e.slot_id === slotId)?.patient_id || '', new Date().toISOString().split('T')[0]).find(s => s.slot_id === slotId);
     if (!slot) return;
-    slot.status = status;
 
     const event: MedicationEvent = {
       event_id: `E-${slotId}-${Date.now()}`,
@@ -531,7 +612,24 @@ class Database {
       timestamp: new Date().toISOString()
     };
 
-    this.state.events.push(event);
+    const existingIndex = this.state.events.findIndex(e =>
+      e.patient_id === slot.patient_id &&
+      e.medicine_id === slot.medicine_id &&
+      e.date === slot.date &&
+      e.scheduled_time === slot.scheduled_time
+    );
+
+    if (existingIndex >= 0) {
+      this.state.events[existingIndex] = event;
+    } else {
+      this.state.events.push(event);
+    }
+
+    const todaysSlot = this.deriveSlotsForPatient(slot.patient_id).find(s => s.slot_id === slot.slot_id);
+    if (todaysSlot) {
+      todaysSlot.status = status;
+    }
+
     this.recalculatePatient(slot.patient_id);
     void api.post('/medication-events', event).catch(() => undefined);
   }
