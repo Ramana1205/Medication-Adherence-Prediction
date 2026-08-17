@@ -54,7 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
             <div className="p-1.5 bg-primary rounded-md text-primary-foreground">
               <Activity size={20} />
             </div>
-            <span className="font-bold text-lg tracking-tight text-primary">MedAdhere AI</span>
+            <span className="font-bold text-lg tracking-tight text-primary">Medivia</span>
           </div>
           <button className="lg:hidden text-slate-500" onClick={() => setIsOpen(false)}>
             <X size={20} />

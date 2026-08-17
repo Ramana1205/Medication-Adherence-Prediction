@@ -230,7 +230,7 @@ export const PatientRegistration: React.FC = () => {
             <CheckCircle2 size={40} />
           </div>
           <h2 className="text-2xl font-black text-slate-800 mb-2">Profile Created</h2>
-          <p className="text-slate-500 mb-6">Welcome to MedAdhere AI, {formData.patient_name.split(' ')[0]}</p>
+          <p className="text-slate-500 mb-6">Welcome to Medivia, {formData.patient_name.split(' ')[0]}</p>
           
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
             <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Your Patient ID</p>

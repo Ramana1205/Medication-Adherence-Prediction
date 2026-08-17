@@ -341,7 +341,7 @@ export const PatientDashboard: React.FC = () => {
       <header className="bg-white px-6 py-4 flex justify-between items-center sticky top-0 z-20 border-b border-slate-200 shadow-sm">
         <div className="flex items-center gap-3">
           <HeartPulse size={28} className="text-blue-600" strokeWidth={2.5} />
-          <span className="font-bold text-xl text-slate-800 tracking-tight">MedAdhere AI</span>
+          <span className="font-bold text-xl text-slate-800 tracking-tight">Medivia</span>
         </div>
         <div className="flex items-center gap-4">
           <button onClick={() => setShowAdherence(true)} className="hidden sm:flex items-center gap-2 text-sm font-bold bg-[#1e3a8a] text-white px-4 py-2 rounded-lg hover:bg-[#172e6e] transition-colors shadow-sm">

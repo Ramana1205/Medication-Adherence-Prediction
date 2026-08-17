@@ -82,7 +82,7 @@ export const DoctorLayout: React.FC = () => {
           <div className="text-blue-400 mr-3">
             <HeartPulse size={28} strokeWidth={2.5} />
           </div>
-          <span className="font-bold text-xl tracking-tight text-white">MedAdhere AI</span>
+          <span className="font-bold text-xl tracking-tight text-white">Medivia</span>
         </div>
 
         {/* Links */}

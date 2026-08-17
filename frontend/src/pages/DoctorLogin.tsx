@@ -32,7 +32,7 @@ export const DoctorLogin: React.FC = () => {
             <HeartPulse size={28} className="text-blue-700" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold">MedAdhere AI</h2>
+            <h2 className="text-2xl font-bold">Medivia</h2>
             <p className="text-sm text-slate-500">Doctor Login</p>
           </div>
         </div>

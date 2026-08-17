@@ -78,7 +78,7 @@ export const PatientAuthLanding: React.FC = () => {
             
             <p className="text-slate-600 text-sm mb-6 flex-grow">
               First time here? <br/><br/>
-              Create your patient profile to get started with MedAdhere AI support.
+              Create your patient profile to get started with Medivia support.
             </p>
             
             {/* Navigates to the 3-step Registration Wizard */}

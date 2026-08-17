@@ -31,7 +31,7 @@ export const Login: React.FC = () => {
           </div>
           
           {/* Main application title */}
-          <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-2 drop-shadow-md">MEDIVIA</h1>
+          <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-2 drop-shadow-md">Medivia</h1>
           
           {/* Subtitle describing the ML function of the project */}
           <p className="text-blue-100 text-lg md:text-xl font-medium mb-8 opacity-90">
