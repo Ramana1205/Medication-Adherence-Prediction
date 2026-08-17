@@ -153,7 +153,6 @@ export const PatientDetail: React.FC = () => {
               ) : (
                 <p className="text-sm text-slate-500">No AI recommendations available.</p>
               )}
-              <p className="mt-3 text-xs text-slate-400">AI-generated decision-support suggestions. Clinical judgment should be used.</p>
             </div>
           </CardContent>
         </Card>

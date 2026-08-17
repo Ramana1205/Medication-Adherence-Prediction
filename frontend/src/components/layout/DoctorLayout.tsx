@@ -136,10 +136,10 @@ export const DoctorLayout: React.FC = () => {
           <div className="flex items-center gap-3">
             <button type="button" onClick={() => navigate('/doctor/profile')} className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden shrink-0 border border-slate-600 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-400">
               <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(doctorName || 'Dr')}&background=334155&color=94a3b8`} alt="Dr" />
-              </button>
+            </button>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-white truncate">{doctorName || 'Dr.'}</p>
-              <p className="text-xs text-slate-400 truncate">Clinic</p>
+              <p className="text-xs text-slate-400 truncate">{db.getAuthSession()?.email || 'Doctor'}</p>
             </div>
           </div>
         </div>
@@ -150,20 +150,7 @@ export const DoctorLayout: React.FC = () => {
       
         {/* Top Header */}
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="relative max-w-md w-full hidden md:block">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <input 
-                type="text" 
-                className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition duration-150 ease-in-out" 
-                placeholder="Search patients (ID, name...)" 
-              />
-            </div>
-          </div>
+          <div className="flex items-center gap-4" />
 
           <div className="flex items-center gap-5">
 

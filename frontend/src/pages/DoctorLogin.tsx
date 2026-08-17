@@ -52,7 +52,6 @@ export const DoctorLogin: React.FC = () => {
 
           <div className="flex items-center justify-between">
             <Button type="submit" className="bg-[#1e3a8a] text-white px-4 py-2">Login</Button>
-            <button type="button" onClick={() => alert('Please contact the system administrator.')} className="text-sm text-slate-500 underline">Forgot password?</button>
           </div>
         </form>
       </div>
