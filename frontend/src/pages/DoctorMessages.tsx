@@ -10,35 +10,78 @@ export const DoctorMessages: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const location = useLocation();
 
+  // Load all conversations
   useEffect(() => {
-    const allMsgs = db.getAllMessages();
-    const patientIds = Array.from(new Set(allMsgs.map((m:any) => m.patient_id))) as string[];
-    setConversations(patientIds);
+    const loadConversations = async () => {
+      try {
+        const allMsgs = await db.getAllMessages();
+        const patientIds = Array.from(new Set(allMsgs.map((m:any) => m.patient_id))) as string[];
+        setConversations(patientIds);
+      } catch (error) {
+        console.error('Failed to load conversations:', error);
+      }
+    };
 
+    loadConversations();
+    
+    // Refresh conversations every 5 seconds
+    const interval = setInterval(loadConversations, 5000);
+    
     // Auto-select from query param ?patient=
     const q = new URLSearchParams(location.search);
     const pid = q.get('patient');
     if (pid) setSelectedPatient(pid);
+    
+    return () => clearInterval(interval);
   }, [location.search]);
 
+  // Load messages for selected patient
   useEffect(() => {
-    if (selectedPatient) {
-      setMessages(db.getMessages(selectedPatient));
-    }
+    if (!selectedPatient) return;
+
+    const loadMessages = async () => {
+      setLoading(true);
+      try {
+        const msgs = await db.getMessages(selectedPatient);
+        setMessages(msgs);
+      } catch (error) {
+        console.error('Failed to load messages:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMessages();
+    
+    // Refresh messages every 3 seconds
+    const interval = setInterval(loadMessages, 3000);
+    return () => clearInterval(interval);
   }, [selectedPatient]);
 
   const openConversation = (patientId: string) => {
     setSelectedPatient(patientId);
   };
 
-  const sendReply = () => {
+  const sendReply = async () => {
     if (!selectedPatient || !text.trim()) return;
-    db.sendMessage(selectedPatient, 'doctor', text.trim());
-    setText('');
-    setMessages(db.getMessages(selectedPatient));
+    
+    setSending(true);
+    try {
+      await db.sendMessage(selectedPatient, 'doctor', text.trim());
+      setText('');
+      // Refresh messages to get latest from server
+      const msgs = await db.getMessages(selectedPatient);
+      setMessages(msgs);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    } finally {
+      setSending(false);
+    }
   };
 
   const patients = db.getPatients();
@@ -83,23 +126,38 @@ export const DoctorMessages: React.FC = () => {
             <>
               <div className="mb-3 font-semibold">Conversation: {selectedPatient}</div>
               <div className="max-h-96 overflow-auto mb-4">
-                {messages.map(m => (
-                  <div key={m.id} className={`mb-3 ${m.sender === 'patient' ? 'text-left' : 'text-right'}`}>
-                    <div className={`inline-block p-2 rounded ${m.sender === 'patient' ? 'bg-slate-100 text-slate-800' : 'bg-blue-600 text-white'}`}>
-                      {m.message}
-                    </div>
-                    <div className="text-xs text-slate-400 mt-1">{new Date(m.timestamp).toLocaleString()}</div>
-                  </div>
-                ))}
-
-                {messages.length === 0 && (
+                {loading && messages.length === 0 ? (
+                  <div className="text-sm text-slate-500">Loading messages...</div>
+                ) : messages.length === 0 ? (
                   <div className="text-sm text-slate-500">No messages yet. Start the conversation with this patient.</div>
+                ) : (
+                  messages.map(m => (
+                    <div key={m.id} className={`mb-3 ${m.sender === 'patient' ? 'text-left' : 'text-right'}`}>
+                      <div className={`inline-block p-2 rounded ${m.sender === 'patient' ? 'bg-slate-100 text-slate-800' : 'bg-blue-600 text-white'}`}>
+                        {m.message}
+                      </div>
+                      <div className="text-xs text-slate-400 mt-1">{new Date(m.timestamp).toLocaleString()}</div>
+                    </div>
+                  ))
                 )}
               </div>
 
               <div className="flex gap-2">
-                <input value={text} onChange={(e) => setText(e.target.value)} className="flex-1 border p-2 rounded" placeholder="Type message..." />
-                <button onClick={sendReply} className="bg-blue-600 text-white px-4 py-2 rounded">Send</button>
+                <input 
+                  value={text} 
+                  onChange={(e) => setText(e.target.value)} 
+                  onKeyPress={(e) => e.key === 'Enter' && !sending && sendReply()}
+                  disabled={sending}
+                  className="flex-1 border p-2 rounded disabled:opacity-50" 
+                  placeholder="Type message..." 
+                />
+                <button 
+                  onClick={sendReply} 
+                  disabled={sending}
+                  className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+                >
+                  {sending ? 'Sending...' : 'Send'}
+                </button>
                 <button onClick={() => navigate(`/doctor/patient/${selectedPatient}`)} className="bg-white border px-3 py-2 rounded">View Patient</button>
               </div>
             </>

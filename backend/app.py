@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+from datetime import datetime
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import pandas as pd
@@ -6,6 +8,29 @@ from pathlib import Path
 import joblib
 import shap
 import numpy as np
+
+from backend.database import (
+    create_intervention,
+    create_medication,
+    create_medication_event,
+    create_message,
+    create_notification,
+    create_patient,
+    ensure_demo_patient_seed,
+    fetch_all_messages,
+    fetch_all_patients,
+    fetch_events,
+    fetch_interventions,
+    fetch_medications,
+    fetch_messages,
+    fetch_notifications,
+    fetch_patient_by_id,
+    fetch_patient_notifications,
+    init_db,
+    mark_notification_read,
+    update_intervention_status,
+    update_patient,
+)
 
 
 # ============================================================
@@ -31,6 +56,12 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+def startup_event():
+    init_db()
+    ensure_demo_patient_seed()
+
+
 # ============================================================
 # LOAD ML MODEL
 # ============================================================
@@ -45,9 +76,6 @@ MODEL_PATH = (
 
 model = joblib.load(MODEL_PATH)
 
-# Initialize SHAP TreeExplainer for the Random Forest model
-# Using TreeExplainer works well for tree-based models (RandomForest)
-# This explainer will be used per-request to compute feature contributions.
 explainer = shap.TreeExplainer(model)
 
 
@@ -56,86 +84,23 @@ explainer = shap.TreeExplainer(model)
 # ============================================================
 
 class PatientData(BaseModel):
-
     age: float = Field(..., ge=0)
-
     chronic_conditions: float = Field(..., ge=0)
-
     num_meds: float = Field(..., ge=0)
-
     refill_gap_days: float = Field(..., ge=0)
-
-    prior_year_adherence: float = Field(
-        ...,
-        ge=0,
-        le=100
-    )
-
-    mental_health_flag: int = Field(
-        ...,
-        ge=0,
-        le=1
-    )
-
-    missed_doses_recent: float = Field(
-        ...,
-        ge=0
-    )
-
-    days_since_last_refill: float = Field(
-        ...,
-        ge=0
-    )
-
-    missed_appointments: float = Field(
-        ...,
-        ge=0
-    )
-
-    medication_changes: float = Field(
-        ...,
-        ge=0
-    )
-
-    daily_dose_frequency: float = Field(
-        ...,
-        ge=0
-    )
-
-    medication_duration_days: float = Field(
-        ...,
-        ge=0
-    )
-
-    gender_F: int = Field(
-        ...,
-        ge=0,
-        le=1
-    )
-
-    gender_M: int = Field(
-        ...,
-        ge=0,
-        le=1
-    )
-
-    copay_tier_high: int = Field(
-        ...,
-        ge=0,
-        le=1
-    )
-
-    copay_tier_low: int = Field(
-        ...,
-        ge=0,
-        le=1
-    )
-
-    copay_tier_medium: int = Field(
-        ...,
-        ge=0,
-        le=1
-    )
+    prior_year_adherence: float = Field(..., ge=0, le=100)
+    mental_health_flag: int = Field(..., ge=0, le=1)
+    missed_doses_recent: float = Field(..., ge=0)
+    days_since_last_refill: float = Field(..., ge=0)
+    missed_appointments: float = Field(..., ge=0)
+    medication_changes: float = Field(..., ge=0)
+    daily_dose_frequency: float = Field(..., ge=0)
+    medication_duration_days: float = Field(..., ge=0)
+    gender_F: int = Field(..., ge=0, le=1)
+    gender_M: int = Field(..., ge=0, le=1)
+    copay_tier_high: int = Field(..., ge=0, le=1)
+    copay_tier_low: int = Field(..., ge=0, le=1)
+    copay_tier_medium: int = Field(..., ge=0, le=1)
 
 
 # ============================================================
@@ -144,10 +109,9 @@ class PatientData(BaseModel):
 
 @app.get("/")
 def root():
-
     return {
         "message": "Medication Adherence Prediction API",
-        "status": "running"
+        "status": "running",
     }
 
 
@@ -157,25 +121,13 @@ def root():
 
 @app.post("/predict")
 def predict(patient: PatientData):
-
-    # Convert patient data to dictionary
     data = patient.model_dump()
-
-    # Convert to DataFrame
     patient_df = pd.DataFrame([data])
-
-    # Prediction (unchanged logic)
     prediction = int(model.predict(patient_df)[0])
-
-    # Probability
     probabilities = model.predict_proba(patient_df)[0]
-
     adherence_probability = float(probabilities[1])
     non_adherence_probability = float(probabilities[0])
 
-    # ========================================================
-    # RISK LEVEL (unchanged)
-    # ========================================================
     if non_adherence_probability >= 0.60:
         risk_level = "HIGH"
     elif non_adherence_probability >= 0.30:
@@ -183,39 +135,25 @@ def predict(patient: PatientData):
     else:
         risk_level = "LOW"
 
-    # ========================================================
-    # SHAP-BASED INTERPRETATION
-    # ========================================================
-    # Compute SHAP values for the patient and identify the top contributors
-
     try:
         shap_values = explainer.shap_values(patient_df)
         shap_array = np.asarray(shap_values)
-
-        # For binary classification in SHAP 0.51.0, the output is typically:
-        # (n_samples, n_features, n_classes)
-        # We want the contribution for class 0 (non-adherence risk)
         if shap_array.ndim == 3:
             shap_for_non_adherence = shap_array[0, :, 0]
         elif shap_array.ndim == 2:
             shap_for_non_adherence = shap_array[0]
         else:
             shap_for_non_adherence = np.zeros(len(patient_df.columns))
-
     except Exception:
-        # If SHAP fails for any reason, fall back to zero contributions
         shap_for_non_adherence = np.zeros(len(patient_df.columns))
 
     features = patient_df.columns.tolist()
-
-    # Pair up features with their value and SHAP contribution
     feature_contribs = []
     for i, feat in enumerate(features):
         val = patient_df.iloc[0, i]
         contrib = float(np.asarray(shap_for_non_adherence)[i])
         feature_contribs.append((feat, val, contrib, abs(contrib)))
 
-    # Sort by absolute contribution and take top 5 (or fewer if less features)
     feature_contribs_sorted = sorted(feature_contribs, key=lambda x: x[3], reverse=True)
     top_n = min(5, len(feature_contribs_sorted))
     top_features = feature_contribs_sorted[:top_n]
@@ -225,9 +163,8 @@ def predict(patient: PatientData):
     recommendations = []
     rec_set = set()
 
-    # Helper to interpret a feature into a doctor-friendly message and a tag
     def interpret_feature(name, val, contrib):
-        positive = contrib > 0  # positive -> pushes toward non-adherence
+        positive = contrib > 0
 
         if name == 'prior_year_adherence':
             if val < 80:
@@ -337,14 +274,11 @@ def predict(patient: PatientData):
                 msg = "Younger age may support medication routine"
                 tag = 'younger_age'
         else:
-            # Generic fallback - keep it simple and non-clinical
             msg = f"{name.replace('_', ' ').capitalize()} is relevant to the patient's adherence pattern"
             tag = name
 
-        # When contrib positive, it increases non-adherence; when negative, it's protective
         return msg, tag, positive
 
-    # Map tags to recommended decision-support actions (non-prescriptive)
     recommendation_map = {
         'long_refill_gap': "Review patient's refill status",
         'recent_missed_doses': "Provide medication adherence counseling",
@@ -356,30 +290,23 @@ def predict(patient: PatientData):
         'mental_health': "Consider mental health support/referral",
         'high_copay': "Explore financial assistance options",
         'med_changes': "Discuss recent medication changes with patient",
-        'complex_dosing': "Consider simplifying dosing regimen"
+        'complex_dosing': "Consider simplifying dosing regimen",
     }
 
-    # Build final lists from top features
     for feat, val, contrib, _abs in top_features:
         msg, tag, positive = interpret_feature(feat, val, contrib)
         if contrib > 0:
-            # Contributes toward non-adherence
             risk_factors.append(msg)
             if tag in recommendation_map and recommendation_map[tag] not in rec_set:
                 recommendations.append(recommendation_map[tag])
                 rec_set.add(recommendation_map[tag])
         else:
-            # Protective for non-adherence
             protective_factors.append(msg)
 
-    # Truncate lists to reasonable size
     risk_factors = risk_factors[:5]
     protective_factors = protective_factors[:5]
     recommendations = recommendations[:5]
 
-    # ========================================================
-    # FINAL RESPONSE (preserve original keys + new arrays)
-    # ========================================================
     return {
         "prediction": prediction,
         "adherence_probability": round(adherence_probability, 4),
@@ -388,5 +315,133 @@ def predict(patient: PatientData):
         "risk_level": risk_level,
         "risk_factors": risk_factors,
         "protective_factors": protective_factors,
-        "recommendations": recommendations
+        "recommendations": recommendations,
     }
+
+
+# ============================================================
+# SHARED DATA APIs
+# ============================================================
+
+@app.get("/patients")
+def list_patients():
+    return fetch_all_patients()
+
+
+@app.get("/patients/{patient_id}")
+def get_patient(patient_id: str):
+    patient = fetch_patient_by_id(patient_id)
+    if patient is None:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    return patient
+
+
+@app.post("/patients")
+def create_patient_endpoint(patient: dict):
+    return create_patient(patient)
+
+
+@app.put("/patients/{patient_id}")
+def update_patient_endpoint(patient_id: str, patient: dict):
+    updated = update_patient(patient_id, patient)
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    return updated
+
+
+@app.get("/patients/{patient_id}/medications")
+def list_patient_medications(patient_id: str):
+    return fetch_medications(patient_id)
+
+
+@app.post("/patients/{patient_id}/medications")
+def create_medication_endpoint(patient_id: str, med: dict):
+    return create_medication(patient_id, med)
+
+
+@app.get("/patients/{patient_id}/events")
+def list_patient_events(patient_id: str):
+    return fetch_events(patient_id)
+
+
+@app.post("/medication-events")
+def create_medication_event_endpoint(event: dict):
+    return create_medication_event(event)
+
+
+@app.get("/patients/{patient_id}/messages")
+def list_patient_messages(patient_id: str):
+    return fetch_messages(patient_id)
+
+
+@app.post("/messages")
+def create_message_endpoint(payload: dict):
+    message = create_message(payload)
+    patient = fetch_patient_by_id(payload.get("patient_id"))
+    patient_name = patient.get("patient_name", "Patient") if patient else "Patient"
+    sender = str(payload.get("sender", "patient")).lower()
+    if sender == "patient":
+        create_notification({
+            "id": f"N-{payload.get('patient_id')}-{datetime.utcnow().timestamp()}",
+            "title": f"New message from {patient_name}",
+            "message": str(payload.get("message", ""))[:120],
+            "patient_id": payload.get("patient_id"),
+            "timestamp": payload.get("timestamp") or datetime.utcnow().isoformat(),
+            "read": False,
+            "for_role": "doctor",
+        })
+    elif sender == "doctor":
+        create_notification({
+            "id": f"N-{payload.get('patient_id')}-{datetime.utcnow().timestamp()}",
+            "title": "New message from your doctor",
+            "message": str(payload.get("message", ""))[:120],
+            "patient_id": payload.get("patient_id"),
+            "timestamp": payload.get("timestamp") or datetime.utcnow().isoformat(),
+            "read": False,
+            "for_role": "patient",
+        })
+    return message
+
+
+@app.get("/notifications")
+def list_notifications():
+    return fetch_notifications()
+
+
+@app.get("/patients/{patient_id}/notifications")
+def list_patient_notifications_endpoint(patient_id: str):
+    return fetch_patient_notifications(patient_id)
+
+
+@app.put("/notifications/{notification_id}/read")
+def mark_notification_read_endpoint(notification_id: str):
+    updated = mark_notification_read(notification_id)
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return updated
+
+
+@app.get("/interventions")
+def list_interventions():
+    return fetch_interventions()
+
+
+@app.post("/interventions")
+def create_intervention_endpoint(intervention: dict):
+    return create_intervention(intervention)
+
+
+@app.put("/interventions/{intervention_id}/status")
+def update_intervention_status_endpoint(intervention_id: str, status: dict):
+    new_status = status.get("status")
+    if not new_status:
+        raise HTTPException(status_code=400, detail="status is required")
+    updated = update_intervention_status(intervention_id, new_status)
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Intervention not found")
+    return updated
+
+
+@app.get("/messages")
+def all_messages():
+    return fetch_all_messages()

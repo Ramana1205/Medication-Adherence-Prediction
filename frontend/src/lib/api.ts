@@ -29,26 +29,23 @@ export interface PredictionResponse {
   recommendations: string[];
 }
 
-const API_URL =
+export const API_URL =
   import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
-export async function predictAdherence(
-  payload: PredictionRequest
-): Promise<PredictionResponse> {
-  const response = await fetch(`${API_URL}/predict`, {
-    method: 'POST',
+export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(options.headers || {}),
     },
-    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    let errorMessage = 'Unable to fetch prediction right now.';
+    let errorMessage = 'The request could not be completed.';
 
     try {
       const errorBody = await response.json();
-
       if (Array.isArray(errorBody?.detail)) {
         errorMessage = errorBody.detail
           .map((item: { msg?: string }) => item.msg || 'Request failed')
@@ -59,11 +56,36 @@ export async function predictAdherence(
         errorMessage = errorBody.message;
       }
     } catch {
-      // Ignore JSON parsing issues and keep the fallback message.
+      // Ignore JSON parsing issues and use the default message.
     }
 
     throw new Error(errorMessage);
   }
 
-  return response.json() as Promise<PredictionResponse>;
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return response.json() as Promise<T>;
 }
+
+export async function predictAdherence(
+  payload: PredictionRequest
+): Promise<PredictionResponse> {
+  return apiRequest<PredictionResponse>('/predict', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export const api = {
+  get: <T>(path: string) => apiRequest<T>(path, { method: 'GET' }),
+  post: <T>(path: string, body: unknown) => apiRequest<T>(path, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
+  put: <T>(path: string, body?: unknown) => apiRequest<T>(path, {
+    method: 'PUT',
+    body: body === undefined ? undefined : JSON.stringify(body),
+  }),
+};
