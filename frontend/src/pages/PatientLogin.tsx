@@ -58,25 +58,23 @@ export const PatientLogin: React.FC = () => {
 
   return (
     // Main container: full screen height, light gray background, centered contents
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 font-sans">
-      {/* White card container for the login form */}
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+    <div className="min-h-screen bg-[var(--background)] flex flex-col items-center justify-center p-4 font-sans">
+      <div className="w-full max-w-md bg-[var(--surface)] rounded-2xl shadow-xl border border-[var(--border)] p-8">
         
         {/* Back Button: Navigates back to the Auth Landing page (Existing vs New selection) */}
         <button 
           onClick={() => navigate('/patient/auth')} 
-          className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors mb-6"
+          className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors mb-6"
         >
           <ArrowLeft size={16} /> Back
         </button>
 
-        {/* Header Section */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <HeartPulse size={40} className="text-blue-600" />
+            <HeartPulse size={40} className="text-[var(--primary)]" />
           </div>
-          <h1 className="text-2xl font-black text-slate-800">Welcome Back</h1>
-          <p className="text-slate-500 text-sm mt-1">Sign in to your patient portal</p>
+          <h1 className="text-2xl font-black text-[var(--text-primary)]">Welcome Back</h1>
+          <p className="text-[var(--text-secondary)] text-sm mt-1">Sign in to your patient portal</p>
         </div>
 
         {/* Conditional rendering: If the 'error' state has a string, show this red alert banner */}
@@ -106,7 +104,7 @@ export const PatientLogin: React.FC = () => {
               // Update state on every keystroke
               onChange={(e) => setPatientId(e.target.value)}
               // font-mono is used here to make IDs easier to read
-              className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+              className="w-full p-3 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] font-mono"
               placeholder="e.g. P004001"
             />
           </div>
@@ -119,7 +117,7 @@ export const PatientLogin: React.FC = () => {
               value={password}
               // Update state on every keystroke
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
               placeholder="Optional password"
             />
           </div>
@@ -128,7 +126,7 @@ export const PatientLogin: React.FC = () => {
           <Button 
             type="submit"
             disabled={loading} // Prevent multiple clicks while authenticating
-            className="w-full bg-[#78A4CB] hover:bg-[#5d8bb5] text-white py-3 mt-4"
+            className="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white py-3 mt-4"
           >
             {/* Change text dynamically based on loading state */}
             {loading ? 'Authenticating...' : 'Login'}

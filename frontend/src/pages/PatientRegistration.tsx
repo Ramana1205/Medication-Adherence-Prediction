@@ -284,7 +284,7 @@ export const PatientRegistration: React.FC = () => {
           
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
             <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Your Patient ID</p>
-            <p className="text-3xl font-mono font-black text-blue-600">{successId}</p>
+            <p className="text-3xl font-mono font-black text-[var(--primary)]">{successId}</p>
           </div>
 
           {predictionResult && (
@@ -369,13 +369,13 @@ export const PatientRegistration: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
           
           {/* Header & Progress Bar container */}
-          <div className="bg-[#78A4CB] p-6 text-white">
+          <div className="bg-[var(--primary)] p-6 text-white">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-2">
                 <HeartPulse size={24} />
                 <span className="font-bold text-lg">New Patient Registration</span>
               </div>
-              <span className="text-sm font-medium text-blue-200 bg-white/10 px-3 py-1 rounded-full">
+              <span className="text-sm font-medium text-white/80 bg-white/10 px-3 py-1 rounded-full">
                 Step {step === 4 ? 'Review' : `${step} of 3`}
               </span>
             </div>
@@ -407,17 +407,17 @@ export const PatientRegistration: React.FC = () => {
                 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Full Name</label>
-                  <input type="text" name="patient_name" value={formData.patient_name} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. John Doe" />
+                  <input type="text" name="patient_name" value={formData.patient_name} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="e.g. John Doe" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-1">Age</label>
-                    <input type="number" name="age" value={formData.age} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Years" />
+                    <input type="number" name="age" value={formData.age} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Years" />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-1">Gender</label>
-                    <select name="gender" value={formData.gender} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <select name="gender" value={formData.gender} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white">
                       <option value="">Select...</option>
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
@@ -428,13 +428,13 @@ export const PatientRegistration: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Disease / Condition</label>
-                  <input type="text" name="condition" value={formData.condition} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3" placeholder="e.g. Hypertension, Type 2 Diabetes" />
+                  <input type="text" name="condition" value={formData.condition} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] mb-3" placeholder="e.g. Hypertension, Type 2 Diabetes" />
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Set Password (Optional)</label>
-                  <input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3" placeholder="Choose a password" />
-                  <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Confirm password" />
+                  <input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] mb-3" placeholder="Choose a password" />
+                  <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Confirm password" />
                 </div>
               </div>
             )}
@@ -449,17 +449,17 @@ export const PatientRegistration: React.FC = () => {
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">How many chronic conditions do you have?</label>
                   <p className="text-xs text-slate-500 mb-2">E.g. Diabetes, Hypertension, Asthma</p>
-                  <input type="number" name="chronic_conditions" value={formData.chronic_conditions} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                  <input type="number" name="chronic_conditions" value={formData.chronic_conditions} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="0" />
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">How many medicines are you currently taking?</label>
-                  <input type="number" name="num_meds" value={formData.num_meds} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Number of prescriptions" />
+                  <input type="number" name="num_meds" value={formData.num_meds} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Number of prescriptions" />
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">How many times per day do you usually take your medicines?</label>
-                  <select name="dose_freq" value={formData.dose_freq} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  <select name="dose_freq" value={formData.dose_freq} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white">
                     <option value="Morning">Once daily (Morning)</option>
                     <option value="Evening">Once daily (Evening)</option>
                     <option value="Twice daily">Twice daily</option>
@@ -469,11 +469,11 @@ export const PatientRegistration: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">How long have you been taking your current medicines?</label>
-                  <input type="number" name="med_duration" value={formData.med_duration} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="In days" />
+                  <input type="number" name="med_duration" value={formData.med_duration} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="In days" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Have you experienced any recent mental health concerns?</label>
-                  <select name="mental_health" value={formData.mental_health} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  <select name="mental_health" value={formData.mental_health} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white">
                     <option value="No">No</option>
                     <option value="Yes">Yes</option>
                   </select>
@@ -519,7 +519,7 @@ export const PatientRegistration: React.FC = () => {
                   ))}
 
                   <div className="text-sm">
-                    <button type="button" onClick={addMedicationRow} className="text-blue-600 font-bold">+ Add Medication</button>
+                    <button type="button" onClick={addMedicationRow} className="text-[var(--primary)] font-bold">+ Add Medication</button>
                   </div>
                 </div>
 
@@ -535,22 +535,22 @@ export const PatientRegistration: React.FC = () => {
                 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">How many medicine doses have you missed recently?</label>
-                  <input type="number" name="missed_doses" value={formData.missed_doses} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Number of doses" />
+                  <input type="number" name="missed_doses" value={formData.missed_doses} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Number of doses" />
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">How many days has it been since your last pharmacy refill?</label>
-                  <input type="number" name="days_since_last_refill" value={formData.days_since_last_refill} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Days" />
+                  <input type="number" name="days_since_last_refill" value={formData.days_since_last_refill} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Days" />
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">How many days was the gap between your expected refill and actual refill?</label>
-                  <input type="number" name="refill_gap" value={formData.refill_gap} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Number of days" />
+                  <input type="number" name="refill_gap" value={formData.refill_gap} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Number of days" />
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">What is your typical medication Copay Tier?</label>
-                  <select name="copay_tier" value={formData.copay_tier} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  <select name="copay_tier" value={formData.copay_tier} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white">
                     <option value="low">Low (e.g. Generic)</option>
                     <option value="medium">Medium</option>
                     <option value="high">High (e.g. Specialty)</option>
@@ -559,12 +559,12 @@ export const PatientRegistration: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">How many medication/healthcare appointments have you missed recently?</label>
-                  <input type="number" name="missed_appointments" value={formData.missed_appointments} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Number of appointments" />
+                  <input type="number" name="missed_appointments" value={formData.missed_appointments} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Number of appointments" />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Have there been any recent changes to your medicines?</label>
-                  <select name="med_changes" value={formData.med_changes} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  <select name="med_changes" value={formData.med_changes} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] bg-white">
                     <option value="No">No</option>
                     <option value="Yes">Yes</option>
                   </select>
@@ -601,7 +601,7 @@ export const PatientRegistration: React.FC = () => {
             <div className="mt-8 flex gap-3">
               {step < 4 ? (
                 // If not on final step, show Continue button
-                <Button onClick={handleNext} className="w-full bg-[#78A4CB] hover:bg-[#5d8bb5] text-white py-3 flex items-center justify-center gap-2">
+                <Button onClick={handleNext} className="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white py-3 flex items-center justify-center gap-2">
                   Continue <ChevronRight size={18} />
                 </Button>
               ) : (
@@ -624,7 +624,7 @@ export const PatientRegistration: React.FC = () => {
                       missed_doses: '4', missed_refills: '1', days_since_last_refill: '14', refill_gap: '5', copay_tier: 'medium', missed_appointments: '0', med_changes: 'No'
                     });
                   }}
-                  className="text-xs text-blue-600 hover:underline font-bold"
+                  className="text-xs text-[var(--primary)] hover:underline font-bold"
                 >
                   Quick Fill
                 </button>

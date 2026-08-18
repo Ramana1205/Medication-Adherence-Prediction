@@ -95,10 +95,10 @@ export const DoctorMessages: React.FC = () => {
     });
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Doctor Messages</h2>
+    <div className="p-6 bg-[var(--background)] min-h-screen">
+      <h2 className="text-2xl font-bold mb-4 text-[var(--text-primary)]">Doctor Messages</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-1 bg-white rounded p-3">
+        <div className="md:col-span-1 bg-[var(--surface)] rounded p-3 border border-[var(--border)]">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold">Patients</h3>
             <input placeholder="Search patients..." value={search} onChange={(e) => setSearch(e.target.value)} className="text-xs p-1 border rounded" />
@@ -108,7 +108,7 @@ export const DoctorMessages: React.FC = () => {
             <div className="text-sm text-slate-500">No patients found.</div>
           ) : (
             filtered.map(p => (
-              <div key={p.patient_id} className={`p-2 hover:bg-slate-50 cursor-pointer flex items-center justify-between ${selectedPatient === p.patient_id ? 'bg-blue-50' : ''}`} onClick={() => openConversation(p.patient_id)}>
+              <div key={p.patient_id} className={`p-2 hover:bg-slate-50 cursor-pointer flex items-center justify-between ${selectedPatient === p.patient_id ? 'bg-[var(--primary)]/10' : ''}`} onClick={() => openConversation(p.patient_id)}>
                 <div>
                   <div className="font-bold">{p.patient_name}</div>
                   <div className="text-xs text-slate-400">{p.patient_id}</div>
@@ -133,7 +133,7 @@ export const DoctorMessages: React.FC = () => {
                 ) : (
                   messages.map(m => (
                     <div key={m.id} className={`mb-3 ${m.sender === 'patient' ? 'text-left' : 'text-right'}`}>
-                      <div className={`inline-block p-2 rounded ${m.sender === 'patient' ? 'bg-slate-100 text-slate-800' : 'bg-blue-600 text-white'}`}>
+                      <div className={`inline-block p-2 rounded ${m.sender === 'patient' ? 'bg-slate-100 text-slate-800' : 'bg-[var(--primary)] text-white'}`}>
                         {m.message}
                       </div>
                       <div className="text-xs text-slate-400 mt-1">{new Date(m.timestamp).toLocaleString()}</div>
@@ -154,7 +154,7 @@ export const DoctorMessages: React.FC = () => {
                 <button 
                   onClick={sendReply} 
                   disabled={sending}
-                  className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+                  className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white px-4 py-2 rounded disabled:opacity-50"
                 >
                   {sending ? 'Sending...' : 'Send'}
                 </button>

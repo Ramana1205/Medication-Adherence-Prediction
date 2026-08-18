@@ -168,7 +168,7 @@ export const PatientDashboard: React.FC = () => {
   const [viewYear, setViewYear] = useState<number>(today.getFullYear());
   const [viewMonthIndex, setViewMonthIndex] = useState<number>(today.getMonth()); // 0-based
 
-  if (loading || !patient) return <div className="flex justify-center p-12"><div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div></div>;
+  if (loading || !patient) return <div className="flex justify-center p-12"><div className="animate-spin w-8 h-8 border-4 border-[var(--primary)] border-t-transparent rounded-full"></div></div>;
 
   const p = patient as Patient;
 
@@ -371,16 +371,16 @@ export const PatientDashboard: React.FC = () => {
       {/* Top Header */}
       <header className="bg-white px-6 py-4 flex justify-between items-center sticky top-0 z-20 border-b border-slate-200 shadow-sm">
         <div className="flex items-center gap-3">
-          <HeartPulse size={28} className="text-blue-600" strokeWidth={2.5} />
+          <HeartPulse size={28} className="text-[var(--primary)]" strokeWidth={2.5} />
           <span className="font-bold text-xl text-slate-800 tracking-tight">Medivia</span>
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={() => setShowAdherence(true)} className="hidden sm:flex items-center gap-2 text-sm font-bold bg-[#78A4CB] text-white px-4 py-2 rounded-lg hover:bg-[#5d8bb5] transition-colors shadow-sm">
+          <button onClick={() => setShowAdherence(true)} className="hidden sm:flex items-center gap-2 text-sm font-bold bg-[var(--primary)] text-white px-4 py-2 rounded-lg hover:bg-[var(--primary-dark)] transition-colors shadow-sm">
             Check Adherence
           </button>
             
           <div className="relative" ref={notifsRef as any}>
-          <button className="text-slate-500 hover:text-blue-600 relative p-2 bg-slate-50 rounded-full" onClick={() => { if (!showNotifs) { loadPatientNotifications(); } setShowNotifs(prev => !prev); }}>
+          <button className="text-slate-500 hover:text-[var(--primary)] relative p-2 bg-slate-50 rounded-full" onClick={() => { if (!showNotifs) { loadPatientNotifications(); } setShowNotifs(prev => !prev); }}>
             <Bell size={20} />
             {patientUnread > 0 ? (
               <span className="absolute -top-1 -right-1 min-w-[18px] h-4 bg-red-500 rounded-full text-white text-[11px] font-bold flex items-center justify-center px-1 border-2 border-white">{patientUnread}</span>
@@ -390,7 +390,7 @@ export const PatientDashboard: React.FC = () => {
           </button>
 
           {/* Header chat button for patients */}
-          <button onClick={() => navigate('/patient/chat')} className="ml-2 text-slate-500 hover:text-blue-600 relative p-2 bg-slate-50 rounded-full">
+          <button onClick={() => navigate('/patient/chat')} className="ml-2 text-slate-500 hover:text-[var(--primary)] relative p-2 bg-slate-50 rounded-full">
             <MessageSquare size={20} />
           </button>
 
@@ -408,7 +408,7 @@ export const PatientDashboard: React.FC = () => {
                   <div className="p-4 text-sm text-slate-500">No new notifications</div>
                 ) : (
                   patientNotifications.map(n => (
-                    <div key={n.id} className={`p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer ${!n.read ? 'bg-blue-50/40' : ''}`} onClick={() => handleOpenNotification(n)}>
+                    <div key={n.id} className={`p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer ${!n.read ? 'bg-[var(--primary)]/5' : ''}`} onClick={() => handleOpenNotification(n)}>
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="font-semibold text-slate-800">{n.title}</div>
@@ -424,7 +424,7 @@ export const PatientDashboard: React.FC = () => {
           )}
           </div>
           <div className="hidden lg:flex items-center gap-3 pl-4 border-l border-slate-200">
-            <button onClick={() => navigate('/patient/profile')} className="w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold">
+            <button onClick={() => navigate('/patient/profile')} className="w-8 h-8 bg-[var(--primary)]/10 text-[var(--primary)] rounded-full flex items-center justify-center font-bold">
               {patient.patient_name.charAt(0)}
             </button>
             <button onClick={() => { localStorage.removeItem('active_patient_id'); navigate('/patient/auth'); }} className="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center gap-2">
@@ -471,11 +471,11 @@ export const PatientDashboard: React.FC = () => {
 
           {/* Next Medicine */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 relative overflow-hidden flex flex-col justify-center">
-            <div className="absolute -right-4 -top-4 text-blue-50"><Clock size={80} /></div>
+            <div className="absolute -right-4 -top-4 text-[var(--primary)]/10"><Clock size={80} /></div>
             <h4 className="font-bold text-slate-800 text-sm mb-2 relative z-10">Next Medicine</h4>
             {nextMed ? (
               <div className="relative z-10">
-                <p className="text-blue-600 font-black text-2xl mb-1">{nextMed.scheduled_time}</p>
+                <p className="text-[var(--primary)] font-black text-2xl mb-1">{nextMed.scheduled_time}</p>
                 <p className="text-sm font-bold text-slate-700 truncate">{getMedName(nextMed.medicine_id)} <span className="text-xs font-normal text-slate-500 block lg:inline ml-0 lg:ml-1">{getMedFreq(nextMed.medicine_id)} dose</span></p>
               </div>
             ) : (
@@ -495,15 +495,15 @@ export const PatientDashboard: React.FC = () => {
           </div>
 
           {/* Need Help? */}
-          <div className="bg-blue-50 rounded-2xl p-5 shadow-sm border border-blue-100 flex flex-col justify-center">
+          <div className="bg-[var(--primary)]/5 rounded-2xl p-5 shadow-sm border border-[var(--primary)]/10 flex flex-col justify-center">
             <div className="flex items-start gap-3 mb-3">
-              <div className="bg-blue-100 p-2 rounded-full text-blue-600 shrink-0"><MessageSquare size={18}/></div>
+              <div className="bg-[var(--primary)]/10 p-2 rounded-full text-[var(--primary)] shrink-0"><MessageSquare size={18}/></div>
               <div>
                 <h4 className="font-bold text-slate-800 text-sm">Need Help?</h4>
                 <p className="text-xs text-slate-600 mt-1">Chat with your Doctor</p>
               </div>
             </div>
-            <button onClick={() => navigate('/patient/chat')} className="w-full bg-[#78A4CB] hover:bg-[#5d8bb5] text-white text-xs font-bold py-2.5 rounded-lg transition-colors">
+            <button onClick={() => navigate('/patient/chat')} className="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white text-xs font-bold py-2.5 rounded-lg transition-colors">
               Chat Now
             </button>
           </div>
@@ -660,7 +660,7 @@ export const PatientDashboard: React.FC = () => {
                       <div
                         key={idx}
                         onClick={() => { if (iso) setSelectedDate(iso); }}
-                        className={`aspect-square flex items-center justify-center rounded-lg text-xs font-bold border transition-transform ${isSelected ? 'scale-105 ring-2 ring-blue-300 cursor-default' : 'hover:scale-110 cursor-pointer'} ${
+                        className={`aspect-square flex items-center justify-center rounded-lg text-xs font-bold border transition-transform ${isSelected ? 'scale-105 ring-2 ring-[var(--primary)]/40 cursor-default' : 'hover:scale-110 cursor-pointer'} ${
                           status === 'green' ? 'bg-green-100 border-green-200 text-green-700' :
                           status === 'red' ? 'bg-red-100 border-red-200 text-red-700' :
                           status === 'yellow' ? 'bg-amber-100 border-amber-200 text-amber-700' :
@@ -723,15 +723,15 @@ export const PatientDashboard: React.FC = () => {
 
       {/* Bottom Mobile Navigation (Hidden on Desktop) */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center px-6 py-3 pb-safe z-30 shadow-[0_-4px_6px_-1px_rgb(0,0,0,0.05)]">
-        <button className="flex flex-col items-center text-blue-600 gap-1 w-16">
+        <button className="flex flex-col items-center text-[var(--primary)] gap-1 w-16">
           <Home size={24} />
           <span className="text-[10px] font-bold mt-1">Home</span>
         </button>
-        <button className="flex flex-col items-center text-slate-400 hover:text-blue-600 transition-colors gap-1 w-16">
+        <button className="flex flex-col items-center text-slate-400 hover:text-[var(--primary)] transition-colors gap-1 w-16">
           <HeartPulse size={24} />
           <span className="text-[10px] font-medium mt-1">Medicines</span>
         </button>
-        <button className="flex flex-col items-center text-slate-400 hover:text-blue-600 transition-colors gap-1 w-16">
+        <button className="flex flex-col items-center text-slate-400 hover:text-[var(--primary)] transition-colors gap-1 w-16">
           <CalendarIcon size={24} />
           <span className="text-[10px] font-medium mt-1">Adherence</span>
         </button>
@@ -761,7 +761,7 @@ export const PatientDashboard: React.FC = () => {
                 <button 
                   key={reason}
                   onClick={() => handleSkipConfirm(reason)}
-                  className="w-full text-left px-4 py-3.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors"
+                  className="w-full text-left px-4 py-3.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-[var(--primary)]/5 hover:border-[var(--primary)]/30 hover:text-[var(--primary)] transition-colors"
                 >
                   {reason}
                 </button>

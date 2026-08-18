@@ -7,30 +7,38 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#f8fafc',
-        foreground: '#0f172a',
+        background: 'var(--background)',
+        foreground: 'var(--text-primary)',
         primary: {
-          DEFAULT: '#78A4CB',
+          DEFAULT: 'var(--primary)',
           foreground: '#ffffff',
+          dark: 'var(--primary-dark)',
         },
-        accent: {
-          DEFAULT: '#0d9488', // teal
-          foreground: '#ffffff',
-        },
+        surface: 'var(--surface)',
+        border: 'var(--border)',
+        muted: 'var(--text-secondary)',
         card: {
-          DEFAULT: '#ffffff',
-          foreground: '#0f172a',
+          DEFAULT: 'var(--surface)',
+          foreground: 'var(--text-primary)',
         },
         danger: {
-          DEFAULT: '#ef4444',
+          DEFAULT: 'var(--high-risk)',
           foreground: '#ffffff',
         },
         warning: {
-          DEFAULT: '#f59e0b',
+          DEFAULT: 'var(--medium-risk)',
           foreground: '#ffffff',
         },
         success: {
-          DEFAULT: '#10b981',
+          DEFAULT: 'var(--low-risk)',
+          foreground: '#ffffff',
+        },
+        ai: {
+          DEFAULT: 'var(--ai-blue)',
+          foreground: '#ffffff',
+        },
+        analytics: {
+          DEFAULT: 'var(--analytics-purple)',
           foreground: '#ffffff',
         },
       },

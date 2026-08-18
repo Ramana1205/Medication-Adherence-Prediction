@@ -38,7 +38,7 @@ export const Analytics: React.FC = () => {
                 <XAxis dataKey="range" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
                 <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Bar dataKey="adherence" fill="#0d9488" radius={[4, 4, 0, 0]} barSize={40} />
+                <Bar dataKey="adherence" fill="var(--primary)" radius={[4, 4, 0, 0]} barSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -56,7 +56,7 @@ export const Analytics: React.FC = () => {
                 <XAxis dataKey="count" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
                 <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Bar dataKey="adherence" fill="#1e3a8a" radius={[4, 4, 0, 0]} barSize={40} />
+                <Bar dataKey="adherence" fill="var(--primary-dark)" radius={[4, 4, 0, 0]} barSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

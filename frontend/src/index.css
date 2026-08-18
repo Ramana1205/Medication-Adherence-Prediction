@@ -1,9 +1,58 @@
+:root {
+  --primary: #0EA5A0;
+  --primary-dark: #087F7A;
+  --background: #F7FAFC;
+  --surface: #FFFFFF;
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+  --low-risk: #16A34A;
+  --medium-risk: #F59E0B;
+  --high-risk: #DC2626;
+  --ai-blue: #2563EB;
+  --analytics-purple: #7C3AED;
+  --border: #E2E8F0;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    background-color: var(--background);
+    color: var(--text-primary);
+  }
+
   body {
     @apply bg-background text-foreground antialiased font-sans;
+    color: var(--text-primary);
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--text-secondary);
+  }
+
+  .bg-primary-dark {
+    background-color: var(--primary-dark);
+  }
+}
+
+@layer components {
+  .card-surface {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
   }
 }

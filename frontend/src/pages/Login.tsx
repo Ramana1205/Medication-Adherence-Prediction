@@ -14,37 +14,32 @@ export const Login: React.FC = () => {
 
   return (
     // Outer container: takes up the full screen height (min-h-screen), centers content, light gray background
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+    <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-4 font-sans">
       
       {/* Main card wrapper: max width of 4xl, white background, rounded corners, flexbox layout (column on mobile, row on desktop md+) */}
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row border border-slate-100">
+      <div className="w-full max-w-4xl bg-[var(--surface)] rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row border border-[var(--border)]">
         
         {/* ========================================= */}
-        {/* LEFT SIDE: BRANDING PANEL (Dark Blue) */}
+        {/* LEFT SIDE: BRANDING PANEL */}
         {/* ========================================= */}
-        {/* Takes up 50% width on medium+ screens, flex column, dark blue background #1e3a8a */}
-        <div className="md:w-1/2 bg-[#78A4CB] p-12 flex flex-col items-center justify-center text-white text-center">
+        <div className="md:w-1/2 bg-[var(--primary)] p-12 flex flex-col items-center justify-center text-white text-center">
           
-          {/* Logo container: slight white opacity with backdrop blur for a glassmorphism effect */}
           <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-sm mb-6 shadow-inner">
             <HeartPulse size={64} className="text-white" strokeWidth={2} />
           </div>
           
-          {/* Main application title */}
           <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-2 drop-shadow-md">Medivia</h1>
           
-          {/* Subtitle describing the ML function of the project */}
-          <p className="text-blue-100 text-lg md:text-xl font-medium mb-8 opacity-90">
+          <p className="text-white/90 text-lg md:text-xl font-medium mb-8 opacity-90">
             Medication Adherence Prediction
           </p>
           
-          {/* Small loading/pulsing dots for aesthetic UI detail */}
           <div className="space-y-3 mt-8">
-            <p className="text-xs text-blue-200 uppercase tracking-wider font-semibold">Select your role to continue</p>
+            <p className="text-xs text-white/80 uppercase tracking-wider font-semibold">Select your role to continue</p>
             <div className="flex gap-2 justify-center">
-              <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
-              <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse delay-75"></div>
-              <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse delay-150"></div>
+              <div className="w-2 h-2 rounded-full bg-white/80 animate-pulse"></div>
+              <div className="w-2 h-2 rounded-full bg-white/80 animate-pulse delay-75"></div>
+              <div className="w-2 h-2 rounded-full bg-white/80 animate-pulse delay-150"></div>
             </div>
           </div>
         </div>
@@ -57,64 +52,54 @@ export const Login: React.FC = () => {
           
           {/* Section header text */}
           <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Welcome Back</h2>
-            <p className="text-slate-500 text-sm">Sign in to access your portal.</p>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Welcome Back</h2>
+            <p className="text-[var(--text-secondary)] text-sm">Sign in to access your portal.</p>
           </div>
 
           <div className="space-y-6">
             
-            {/* --- DOCTOR LOGIN BLOCK --- */}
-            {/* Box styling: light gray bg, subtle border, hover effect changes border to blue */}
-            <div className="bg-slate-50 rounded-xl p-6 border border-slate-200 hover:border-blue-300 transition-colors group">
+            <div className="bg-[var(--background)] rounded-xl p-6 border border-[var(--border)] hover:border-[var(--primary)] transition-colors group">
               <div className="flex items-center gap-4 mb-4">
-                
-                {/* Icon wrapper: Blue circle, scales up slightly when parent group is hovered (group-hover:scale-110) */}
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 shrink-0 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] shrink-0 group-hover:scale-110 transition-transform">
                   <Stethoscope size={24} />
                 </div>
                 
                 <div>
-                  <h3 className="font-bold text-slate-800 text-lg">Healthcare Provider</h3>
-                  <p className="text-xs text-slate-500">Analytics, risk prediction, and patient management.</p>
+                  <h3 className="font-bold text-[var(--text-primary)] text-lg">Healthcare Provider</h3>
+                  <p className="text-xs text-[var(--text-secondary)]">Analytics, risk prediction, and patient management.</p>
                 </div>
               </div>
               
-              {/* Button: Routes directly to Doctor Dashboard, simulating an instant login for hackathon evaluation */}
               <Button 
-                              onClick={() => navigate('/doctor/login')}
-                className="w-full bg-[#78A4CB] hover:bg-[#5d8bb5] text-white py-6"
+                onClick={() => navigate('/doctor/login')}
+                className="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white py-6"
               >
-                              Doctor Login
+                Doctor Login
               </Button>
             </div>
 
             {/* --- DIVIDER LINE WITH "Or" TEXT --- */}
             <div className="relative flex items-center py-2">
-              <div className="flex-grow border-t border-slate-200"></div>
-              <span className="flex-shrink-0 mx-4 text-slate-400 text-xs font-medium uppercase">Or</span>
-              <div className="flex-grow border-t border-slate-200"></div>
+              <div className="flex-grow border-t border-[var(--border)]"></div>
+              <span className="flex-shrink-0 mx-4 text-[var(--text-secondary)] text-xs font-medium uppercase">Or</span>
+              <div className="flex-grow border-t border-[var(--border)]"></div>
             </div>
 
-            {/* --- PATIENT LOGIN BLOCK --- */}
-            {/* Box styling: light gray bg, hover effect changes border to green to signify a different portal */}
-            <div className="bg-slate-50 rounded-xl p-6 border border-slate-200 hover:border-green-300 transition-colors group">
+            <div className="bg-[var(--background)] rounded-xl p-6 border border-[var(--border)] hover:border-[var(--low-risk)] transition-colors group">
               <div className="flex items-center gap-4 mb-4">
-                
-                {/* Icon wrapper: Green circle */}
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-700 shrink-0 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-full bg-[var(--low-risk)]/10 flex items-center justify-center text-[var(--low-risk)] shrink-0 group-hover:scale-110 transition-transform">
                   <UserCircle2 size={24} />
                 </div>
                 
                 <div>
-                  <h3 className="font-bold text-slate-800 text-lg">Patient Access</h3>
-                  <p className="text-xs text-slate-500">View your daily medications and track adherence.</p>
+                  <h3 className="font-bold text-[var(--text-primary)] text-lg">Patient Access</h3>
+                  <p className="text-xs text-[var(--text-secondary)]">View your daily medications and track adherence.</p>
                 </div>
               </div>
               
-              {/* Button: Routes to the new PatientAuthLanding page allowing them to select Existing vs New patient */}
               <Button 
                 onClick={() => navigate('/patient/auth')}
-                className="w-full bg-green-600 hover:bg-green-700 text-white py-6"
+                className="w-full bg-[var(--low-risk)] hover:bg-[#15803d] text-white py-6"
               >
                 Patient Portal Access
               </Button>

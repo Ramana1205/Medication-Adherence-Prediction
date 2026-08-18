@@ -27,7 +27,7 @@ export const Interventions: React.FC = () => {
                   <td><span className={`px-2 py-0.5 rounded text-xs font-bold ${i.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-700' : i.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>{i.status}</span></td>
                   <td className="text-xs text-slate-500">{new Date(i.created_at).toLocaleString()}</td>
                   <td className="text-xs text-slate-500">{new Date(i.updated_at).toLocaleString()}</td>
-                  <td><button onClick={() => window.location.href = `/doctor/patient/${i.patient_id}`} className="text-blue-600">View</button></td>
+                  <td><button onClick={() => window.location.href = `/doctor/patient/${i.patient_id}`} className="text-[var(--primary)]">View</button></td>
                 </tr>
               ))}
             </tbody>

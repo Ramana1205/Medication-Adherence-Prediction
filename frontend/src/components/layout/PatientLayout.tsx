@@ -18,15 +18,15 @@ export const PatientLayout: React.FC = () => {
         
         {/* Logo */}
         <div className="h-16 flex items-center px-6 border-b border-slate-200 cursor-pointer" onClick={() => navigate('/patient-portal')}>
-          <div className="text-[#78A4CB] mr-2">
+          <div className="text-[var(--primary)] mr-2">
             <HeartPulse size={28} strokeWidth={2.5} />
           </div>
-          <span className="font-bold text-xl tracking-tight text-[#78A4CB]">Medivia</span>
+          <span className="font-bold text-xl tracking-tight text-[var(--primary)]">Medivia</span>
         </div>
 
         {/* Links */}
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 bg-[#78A4CB] text-white rounded-lg text-sm font-medium">
+          <button className="w-full flex items-center gap-3 px-3 py-2.5 bg-[var(--primary)] text-white rounded-lg text-sm font-medium">
             <LayoutDashboard size={18} />
             Dashboard
           </button>
@@ -74,12 +74,12 @@ export const PatientLayout: React.FC = () => {
 
         {/* Need Help Card */}
         <div className="p-4">
-          <div className="bg-[#f8faff] border border-[#78A4CB]/30 rounded-xl p-4">
-            <h4 className="font-semibold text-[#78A4CB] text-sm mb-1">Need Help?</h4>
+          <div className="bg-[var(--background)] border border-[var(--primary)]/30 rounded-xl p-4">
+            <h4 className="font-semibold text-[var(--primary)] text-sm mb-1">Need Help?</h4>
             <p className="text-xs text-slate-500 mb-3 leading-relaxed">
               Contact your care team for any questions or support.
             </p>
-            <Button className="w-full bg-[#78A4CB] hover:bg-[#5d8bb5] text-xs h-9" size="sm">
+            <Button className="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-xs h-9" size="sm">
               <Phone size={14} className="mr-2" /> Contact Care Team
             </Button>
           </div>
@@ -107,7 +107,7 @@ export const PatientLayout: React.FC = () => {
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
             </button>
             <div className="flex items-center gap-3 pl-5 border-l border-slate-200">
-              <button type="button" onClick={() => navigate('/patient/profile')} className="w-9 h-9 rounded-full bg-slate-200 overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-300">
+              <button type="button" onClick={() => navigate('/patient/profile')} className="w-9 h-9 rounded-full bg-slate-200 overflow-hidden focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
                 <img src="https://ui-avatars.com/api/?name=John+Doe&background=e2e8f0&color=475569" alt="User" className="w-full h-full object-cover" />
               </button>
               <div className="hidden sm:block text-sm">

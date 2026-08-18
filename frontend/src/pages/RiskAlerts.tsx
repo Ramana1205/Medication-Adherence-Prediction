@@ -23,7 +23,7 @@ export const RiskAlerts: React.FC = () => {
                   <div className="text-sm text-slate-600">{p.risk_level} — {(p.risk_percentage ?? p.risk_score) || p.risk_score}%</div>
                 </div>
                 <div>
-                  <button onClick={() => window.location.href = `/doctor/patient/${p.patient_id}`} className="text-blue-600 hover:underline">Open</button>
+                  <button onClick={() => window.location.href = `/doctor/patient/${p.patient_id}`} className="text-[var(--primary)] hover:underline">Open</button>
                 </div>
               </li>
             ))}

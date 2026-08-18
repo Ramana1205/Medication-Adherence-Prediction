@@ -92,7 +92,7 @@ export const DoctorDashboard: React.FC = () => {
                 <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">Total Patients</p>
                 <h3 className="text-3xl font-bold text-slate-800">{totalPatients.toLocaleString()}</h3>
               </div>
-              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Users size={20} /></div>
+              <div className="p-2 bg-[var(--primary)]/10 text-[var(--primary)] rounded-lg"><Users size={20} /></div>
             </div>
             <p className="text-xs text-slate-500 mt-4 flex items-center gap-1"><TrendingUp size={12} className="text-green-500"/> +12 this week</p>
           </CardContent>
@@ -144,7 +144,7 @@ export const DoctorDashboard: React.FC = () => {
                 <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">Avg Adherence</p>
                 <h3 className="text-3xl font-bold text-slate-800">{avgAdherence}%</h3>
               </div>
-              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><TrendingUp size={20} /></div>
+              <div className="p-2 bg-[var(--primary)]/10 text-[var(--primary)] rounded-lg"><TrendingUp size={20} /></div>
             </div>
             <p className="text-xs text-slate-500 mt-4 flex items-center gap-1"><TrendingUp size={12} className="text-green-500"/> +2.3% vs last month</p>
           </CardContent>
@@ -201,14 +201,14 @@ export const DoctorDashboard: React.FC = () => {
                       </div>
                       <div className="flex flex-col items-end">
                         <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${p.risk_level === 'HIGH' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{p.risk_level}</span>
-                        <button onClick={() => navigate(`/doctor/patient/${p.patient_id}`)} className="mt-4 text-sm font-bold text-blue-600 hover:underline">View Patient</button>
+                        <button onClick={() => navigate(`/doctor/patient/${p.patient_id}`)} className="mt-4 text-sm font-bold text-[var(--primary)] hover:underline">View Patient</button>
                       </div>
                     </div>
                   ))}
 
                   {highRiskPatients.length > 5 && (
                     <div className="text-right">
-                      <button onClick={() => setFilter('HIGH')} className="text-sm font-semibold text-blue-600 hover:underline">View all high-risk patients</button>
+                      <button onClick={() => setFilter('HIGH')} className="text-sm font-semibold text-[var(--primary)] hover:underline">View all high-risk patients</button>
                     </div>
                   )}
 
@@ -278,13 +278,13 @@ export const DoctorDashboard: React.FC = () => {
                   <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} tickFormatter={(v) => `${v}%`} />
                   <Tooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
                   <Line type="monotone" dataKey="previous" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" dot={false} name="Previous Adherence" />
-                  <Line type="monotone" dataKey="recent" stroke="#3b82f6" strokeWidth={3} dot={{r: 4, fill: '#3b82f6'}} name="Recent Adherence" />
+                  <Line type="monotone" dataKey="recent" stroke="var(--primary)" strokeWidth={3} dot={{r: 4, fill: 'var(--primary)'}} name="Recent Adherence" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
             <div className="flex justify-center gap-6 mt-2 text-xs font-medium text-slate-500">
               <span className="flex items-center gap-1.5"><div className="w-4 h-0 border-t-2 border-dashed border-slate-400"></div> Previous Adherence</span>
-              <span className="flex items-center gap-1.5"><div className="w-4 h-1 bg-blue-500 rounded-full"></div> Recent Adherence</span>
+              <span className="flex items-center gap-1.5"><div className="w-4 h-1 bg-[var(--primary)] rounded-full"></div> Recent Adherence</span>
             </div>
           </CardContent>
         </Card>
@@ -388,7 +388,7 @@ export const DoctorDashboard: React.FC = () => {
                       <td className="py-3 px-4 text-slate-800">{(p.risk_percentage ?? p.risk_score) !== undefined && (p.risk_percentage ?? p.risk_score) !== null ? `${(p.risk_percentage ?? p.risk_score)}%` : 'N/A'}</td>
                       <td className="py-3 px-4 text-slate-600">{p.prior_adherence !== undefined ? `${p.prior_adherence}%` : 'N/A'}</td>
                       <td className="py-3 px-4 text-right">
-                        <button onClick={(e) => { e.stopPropagation(); navigate(`/doctor/patient/${p.patient_id}`); }} className="text-xs font-bold text-blue-600 hover:underline">View</button>
+                        <button onClick={(e) => { e.stopPropagation(); navigate(`/doctor/patient/${p.patient_id}`); }} className="text-xs font-bold text-[var(--primary)] hover:underline">View</button>
                       </td>
                     </tr>
                   ))}

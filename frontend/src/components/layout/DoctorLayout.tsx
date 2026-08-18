@@ -72,49 +72,46 @@ export const DoctorLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#f8f9fa] font-sans">
+    <div className="flex h-screen bg-[var(--background)] font-sans">
       
-      {/* Sidebar Navigation */}
-      <aside className="w-64 bg-[#1e293b] text-slate-300 flex flex-col hidden md:flex shrink-0 shadow-lg z-20">
+      <aside className="w-64 bg-[#0f172a] text-slate-300 flex flex-col hidden md:flex shrink-0 shadow-lg z-20">
       
-        {/* Logo */}
         <div className="h-16 flex items-center px-6 border-b border-slate-700/50 cursor-pointer bg-[#0f172a]" onClick={() => navigate('/doctor/dashboard')}>
-          <div className="text-blue-400 mr-3">
+          <div className="text-[var(--primary)] mr-3">
             <HeartPulse size={28} strokeWidth={2.5} />
           </div>
           <span className="font-bold text-xl tracking-tight text-white">Medivia</span>
         </div>
 
-        {/* Links */}
         <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1.5">
           <button 
             onClick={() => navigate('/doctor/dashboard')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/dashboard') ? 'bg-[#78A4CB] text-white shadow-md' : 'hover:bg-slate-800 hover:text-white'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/dashboard') ? 'bg-[var(--primary)] text-white shadow-md' : 'hover:bg-slate-800 hover:text-white'}`}
           >
             <LayoutDashboard size={18} /> Dashboard
           </button>
           
           <button 
             onClick={() => navigate('/doctor/patients')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/patients') || isActive('/patient/') ? 'bg-[#78A4CB] text-white shadow-md' : 'hover:bg-slate-800 hover:text-white'}`}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/patients') || isActive('/patient/') ? 'bg-[var(--primary)] text-white shadow-md' : 'hover:bg-slate-800 hover:text-white'}`}
           >
             <Users size={18} /> My Patients
           </button>
           
-          <button onClick={() => navigate('/doctor/medications')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/medications') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+          <button onClick={() => navigate('/doctor/medications')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/medications') ? 'bg-[var(--primary)] text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
             <Pill size={18} /> Medications
           </button>
 
-          <button onClick={() => navigate('/doctor/messages')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/messages') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+          <button onClick={() => navigate('/doctor/messages')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/messages') ? 'bg-[var(--primary)] text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
             <MessageSquare size={18} /> Messages
             {unreadCount > 0 && <span className="ml-auto text-[10px] font-bold bg-red-600 text-white rounded-full px-2 py-0.5">{unreadCount}</span>}
           </button>
           
-          <button onClick={() => navigate('/doctor/risk-alerts')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/risk-alerts') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+          <button onClick={() => navigate('/doctor/risk-alerts')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/risk-alerts') ? 'bg-[var(--primary)] text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
             <AlertTriangle size={18} /> Risk & Alerts
           </button>
           
-          <button onClick={() => navigate('/doctor/interventions')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/interventions') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+          <button onClick={() => navigate('/doctor/interventions')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/interventions') ? 'bg-[var(--primary)] text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
             <Activity size={18} /> Interventions
           </button>
 
@@ -122,11 +119,11 @@ export const DoctorLayout: React.FC = () => {
             <p className="px-3 text-xs font-bold text-slate-500 uppercase tracking-wider">System</p>
           </div>
 
-          <button onClick={() => navigate('/doctor/profile')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/profile') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+          <button onClick={() => navigate('/doctor/profile')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive('/profile') ? 'bg-[var(--primary)] text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
             <Settings size={18} /> Profile & Settings
           </button>
 
-          <button onClick={() => navigate('/doctor/dev')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-amber-500 ${isActive('/dev') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800'}`}>
+          <button onClick={() => navigate('/doctor/dev')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-amber-500 ${isActive('/dev') ? 'bg-[var(--primary)] text-white' : 'hover:bg-slate-800'}`}>
             <Code size={18} /> Developer / Evaluation
           </button>
         </nav>
@@ -134,7 +131,7 @@ export const DoctorLayout: React.FC = () => {
         {/* User Footer */}
         <div className="p-4 border-t border-slate-700/50 bg-[#0f172a]">
           <div className="flex items-center gap-3">
-            <button type="button" onClick={() => navigate('/doctor/profile')} className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden shrink-0 border border-slate-600 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <button type="button" onClick={() => navigate('/doctor/profile')} className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden shrink-0 border border-slate-600 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
               <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(doctorName || 'Dr')}&background=334155&color=94a3b8`} alt="Dr" />
             </button>
             <div className="flex-1 min-w-0">
@@ -149,13 +146,13 @@ export const DoctorLayout: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
       
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 shrink-0">
+        <header className="h-16 bg-[var(--surface)] border-b border-[var(--border)] flex items-center justify-between px-6 z-10 shrink-0">
           <div className="flex items-center gap-4" />
 
           <div className="flex items-center gap-5">
 
             <div className="relative" ref={notifsRef as any}>
-              <button onClick={toggleNotifs} className="relative text-slate-500 hover:text-slate-700 transition-colors p-2 rounded-full">
+              <button onClick={toggleNotifs} className="relative text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors p-2 rounded-full">
                 <Bell size={20} />
                 {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold text-white">{unreadCount}</span>}
               </button>
@@ -171,7 +168,7 @@ export const DoctorLayout: React.FC = () => {
                       <div className="p-4 text-sm text-slate-500">No notifications</div>
                     ) : (
                       notifications.map(n => (
-                        <div key={n.id} className={`p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer ${!n.read ? 'bg-blue-50/40' : ''}`} onClick={() => handleOpenNotification(n)}>
+                        <div key={n.id} className={`p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer ${!n.read ? 'bg-[var(--primary)]/5' : ''}`} onClick={() => handleOpenNotification(n)}>
                           <div className="flex items-start justify-between">
                             <div>
                               <div className="font-semibold text-slate-800">{n.title}</div>
@@ -196,7 +193,7 @@ export const DoctorLayout: React.FC = () => {
         </header>
         
         {/* Scrollable Main Content */}
-        <main className="flex-1 overflow-auto bg-slate-50 p-6 relative">
+        <main className="flex-1 overflow-auto bg-[var(--background)] p-6 relative">
           <div className="max-w-[1600px] mx-auto">
             <Outlet />
           </div>

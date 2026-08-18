@@ -30,7 +30,7 @@ export const PatientDetail: React.FC = () => {
       
       {/* Header */}
       <div className="flex items-center gap-4 mb-2">
-        <button onClick={() => navigate(-1)} className="p-2 bg-white rounded-full border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-200 transition-colors">
+        <button onClick={() => navigate(-1)} className="p-2 bg-white rounded-full border border-slate-200 text-slate-500 hover:text-[var(--primary)] hover:border-[var(--primary)]/20 transition-colors">
           <ChevronLeft size={20} />
         </button>
         <div>
@@ -161,7 +161,7 @@ export const PatientDetail: React.FC = () => {
         <Card className="shadow-sm border-slate-200">
           <CardHeader className="pb-2 border-b border-slate-100">
             <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
-              <Pill size={18} className="text-blue-500" /> Medication-wise Adherence
+              <Pill size={18} className="text-[var(--primary)]" /> Medication-wise Adherence
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6 space-y-5">
@@ -190,19 +190,19 @@ export const PatientDetail: React.FC = () => {
         <Card className="shadow-sm border-slate-200">
           <CardHeader className="pb-2 border-b border-slate-100">
             <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
-              <Clock size={18} className="text-blue-500" /> Time-based Pattern
+              <Clock size={18} className="text-[var(--primary)]" /> Time-based Pattern
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="space-y-4 mb-6">
               <div className="flex items-center justify-between text-sm">
                 <span className="w-24 text-slate-600 font-medium">Morning</span>
-                <div className="flex-1 mx-4 h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-blue-400 w-[21%] rounded-full"></div></div>
+                <div className="flex-1 mx-4 h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-[var(--primary)] w-[21%] rounded-full"></div></div>
                 <span className="w-12 text-right font-bold text-slate-700">21%</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="w-24 text-slate-600 font-medium">Afternoon</span>
-                <div className="flex-1 mx-4 h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-blue-400 w-[34%] rounded-full"></div></div>
+                <div className="flex-1 mx-4 h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-[var(--primary)] w-[34%] rounded-full"></div></div>
                 <span className="w-12 text-right font-bold text-slate-700">34%</span>
               </div>
               <div className="flex items-center justify-between text-sm">
@@ -223,31 +223,31 @@ export const PatientDetail: React.FC = () => {
         </Card>
 
         {/* Recommended Intervention */}
-        <Card className="shadow-sm border-slate-200 border-t-4 border-t-[#78A4CB]">
+        <Card className="shadow-sm border-slate-200 border-t-4 border-t-[var(--primary)]">
           <CardHeader className="pb-2 border-b border-slate-100">
             <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
-              <Activity size={18} className="text-[#78A4CB]" /> Recommended Support
+              <Activity size={18} className="text-[var(--primary)]" /> Recommended Support
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
             <ul className="space-y-4 mb-8">
               <li className="flex items-center gap-3 text-sm font-medium text-slate-700">
-                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600"><Bell size={16}/></div>
+                <div className="w-8 h-8 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)]"><Bell size={16}/></div>
                 Evening reminder
               </li>
               <li className="flex items-center gap-3 text-sm font-medium text-slate-700">
-                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600"><Pill size={16}/></div>
+                <div className="w-8 h-8 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)]"><Pill size={16}/></div>
                 Refill reminder
               </li>
               <li className="flex items-center gap-3 text-sm font-medium text-slate-700">
-                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600"><Activity size={16}/></div>
+                <div className="w-8 h-8 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)]"><Activity size={16}/></div>
                 Adherence-support follow-up
               </li>
             </ul>
 
             <div className="flex gap-3">
               {interventionStatus === 'Pending' && (
-                <Button className="w-full bg-[#78A4CB] hover:bg-[#5d8bb5]" onClick={() => {
+                <Button className="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)]" onClick={() => {
                   // Persist intervention
                   db.addIntervention(patient.patient_id, 'Evening reminder', 'Provide an evening medication reminder.', 'Dr. Sharma');
                   setInterventionStatus('In Progress');

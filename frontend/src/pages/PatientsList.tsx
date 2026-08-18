@@ -36,7 +36,7 @@ export const PatientsList: React.FC = () => {
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold text-slate-800">My Patients</h1>
-        <Button className="bg-[#1e3a8a] hover:bg-[#172e6e]" onClick={() => setShowAddModal(true)}>
+        <Button className="bg-[var(--primary)] hover:bg-[var(--primary-dark)]" onClick={() => setShowAddModal(true)}>
           <Plus size={18} className="mr-2" /> Add Patient
         </Button>
       </div>
@@ -47,7 +47,7 @@ export const PatientsList: React.FC = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
             <input 
               type="text" 
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[var(--primary)]"
               placeholder="Search by Patient ID or Name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -57,7 +57,7 @@ export const PatientsList: React.FC = () => {
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <span className="text-sm font-medium text-slate-500">Filter Risk:</span>
             <select 
-              className="border border-slate-300 rounded-lg text-sm p-2 focus:outline-none focus:border-blue-500 bg-white"
+              className="border border-slate-300 rounded-lg text-sm p-2 focus:outline-none focus:border-[var(--primary)] bg-white"
               value={riskFilter}
               onChange={(e) => setRiskFilter(e.target.value)}
             >
@@ -98,7 +98,7 @@ export const PatientsList: React.FC = () => {
                   <td className="py-4 px-6 font-bold text-slate-800">{p.risk_score}</td>
                   <td className="py-4 px-6 text-slate-600">{p.prior_adherence}%</td>
                   <td className="py-4 px-6 text-right">
-                    <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => navigate(`/doctor/patient/${p.patient_id}`)}>
+                    <Button variant="outline" size="sm" className="text-[var(--primary)] border-[var(--border)] hover:bg-[var(--primary)]/5" onClick={() => navigate(`/doctor/patient/${p.patient_id}`)}>
                       View Profile
                     </Button>
                   </td>
@@ -122,7 +122,7 @@ export const PatientsList: React.FC = () => {
         <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl p-6 animate-in zoom-in-95 duration-200 overflow-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold flex items-center gap-2"><UserPlus className="text-blue-600" /> Add New Patient</h3>
+              <h3 className="text-xl font-bold flex items-center gap-2"><UserPlus className="text-[var(--primary)]" /> Add New Patient</h3>
               <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600"><X size={20}/></button>
             </div>
 
@@ -404,7 +404,7 @@ const AddPatientForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
       <div className="flex justify-end gap-3">
         <Button variant="outline" onClick={() => onClose()}>Cancel</Button>
-        <Button className="bg-[#1e3a8a] hover:bg-[#172e6e]" onClick={handleSubmit} disabled={loading}>{loading ? 'Creating...' : 'Create Patient & Predict'}</Button>
+        <Button className="bg-[var(--primary)] hover:bg-[var(--primary-dark)]" onClick={handleSubmit} disabled={loading}>{loading ? 'Creating...' : 'Create Patient & Predict'}</Button>
       </div>
     </div>
   );

@@ -14,26 +14,23 @@ export const PatientAuthLanding: React.FC = () => {
 
   return (
     // Main container: full screen height, light gray background, centered contents
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 font-sans">
+    <div className="min-h-screen bg-[var(--background)] flex flex-col items-center justify-center p-4 font-sans">
       
-      {/* White card container for the content */}
-      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-slate-100 p-8 md:p-12">
+      <div className="w-full max-w-3xl bg-[var(--surface)] rounded-2xl shadow-xl border border-[var(--border)] p-8 md:p-12">
         
-        {/* Back Button: Navigates back to the root '/' (Main Login select) */}
         <button 
           onClick={() => navigate('/')} 
-          className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors mb-8"
+          className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors mb-8"
         >
           <ArrowLeft size={16} /> Back to main portal
         </button>
 
-        {/* Header Section */}
         <div className="text-center mb-10">
           <div className="flex justify-center mb-4">
-            <HeartPulse size={48} className="text-blue-600" />
+            <HeartPulse size={48} className="text-[var(--primary)]" />
           </div>
-          <h1 className="text-3xl font-black text-slate-800 mb-2">Patient Portal</h1>
-          <p className="text-slate-500 text-lg">How would you like to continue?</p>
+          <h1 className="text-3xl font-black text-[var(--text-primary)] mb-2">Patient Portal</h1>
+          <p className="text-[var(--text-secondary)] text-lg">How would you like to continue?</p>
         </div>
 
         {/* Grid layout for the two main options: 1 column on mobile, 2 on medium+ screens */}
@@ -41,50 +38,43 @@ export const PatientAuthLanding: React.FC = () => {
           
           {/* --- OPTION 1: EXISTING PATIENT --- */}
           {/* Hovering changes border to blue and adds shadow */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 flex flex-col h-full hover:border-blue-400 hover:shadow-md transition-all group">
+          <div className="bg-[var(--background)] border border-[var(--border)] rounded-xl p-6 flex flex-col h-full hover:border-[var(--primary)] hover:shadow-md transition-all group">
             <div className="flex items-center gap-4 mb-4">
-              {/* Icon wrapper: scales up on parent group hover */}
-              <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 bg-[var(--primary)]/10 text-[var(--primary)] rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                 <UserCircle2 size={24} />
               </div>
-              <h2 className="text-xl font-bold text-slate-800">Existing Patient</h2>
+              <h2 className="text-xl font-bold text-[var(--text-primary)]">Existing Patient</h2>
             </div>
             
-            {/* flex-grow ensures the button below gets pushed to the bottom evenly */}
-            <p className="text-slate-600 text-sm mb-6 flex-grow">
+            <p className="text-[var(--text-secondary)] text-sm mb-6 flex-grow">
               Already registered? <br/><br/>
               Sign in to view your medication information and track your daily adherence.
             </p>
             
-            {/* Navigates to the PatientLogin screen */}
             <Button 
               onClick={() => navigate('/patient/login')}
-              className="w-full bg-[#78A4CB] hover:bg-[#5d8bb5] text-white"
+              className="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white"
             >
               Continue as Existing
             </Button>
           </div>
 
-          {/* --- OPTION 2: NEW PATIENT --- */}
-          {/* Hovering changes border to green and adds shadow */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 flex flex-col h-full hover:border-green-400 hover:shadow-md transition-all group">
+          <div className="bg-[var(--background)] border border-[var(--border)] rounded-xl p-6 flex flex-col h-full hover:border-[var(--low-risk)] hover:shadow-md transition-all group">
             <div className="flex items-center gap-4 mb-4">
-              {/* Icon wrapper: scales up on parent group hover */}
-              <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 bg-[var(--low-risk)]/10 text-[var(--low-risk)] rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                 <UserPlus size={24} />
               </div>
-              <h2 className="text-xl font-bold text-slate-800">New Patient</h2>
+              <h2 className="text-xl font-bold text-[var(--text-primary)]">New Patient</h2>
             </div>
             
-            <p className="text-slate-600 text-sm mb-6 flex-grow">
+            <p className="text-[var(--text-secondary)] text-sm mb-6 flex-grow">
               First time here? <br/><br/>
               Create your patient profile to get started with Medivia support.
             </p>
             
-            {/* Navigates to the 3-step Registration Wizard */}
             <Button 
               onClick={() => navigate('/patient/register')}
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              className="w-full bg-[var(--low-risk)] hover:bg-[#15803d] text-white"
             >
               Register as New Patient
             </Button>
