@@ -8,8 +8,8 @@ import { HeartPulse, ArrowLeft, CheckCircle2, ChevronRight, ChevronLeft } from '
 import { Button } from '../components/ui/Button';
 // Import the mock database that handles the ML logic and data storage
 import { db } from '../store/db';
-import { clearDoctorToken, predictAdherence, setPatientToken, api, type PredictionResponse } from '../lib/api';
-import type { Medication } from '../types';
+import { ApiError, clearDoctorToken, predictAdherence, setPatientToken, api, type PredictionResponse } from '../lib/api';
+import type { Medication, Patient } from '../types';
 
 // Define the Registration Wizard component
 export const PatientRegistration: React.FC = () => {
@@ -255,34 +255,51 @@ export const PatientRegistration: React.FC = () => {
           gender_M: parsedGenderM,
           gender_F: parsedGenderF,
         },
-      }, formData.password, parsedNumMeds, formData.dose_freq, normalizedMedicationList.length ? normalizedMedicationList : undefined);
+      }, formData.password, parsedNumMeds, formData.dose_freq, normalizedMedicationList.length ? normalizedMedicationList : undefined, false);
 
-      await db.refreshPatientMedications(newPatient.patient_id);
-
-      // Persist model outputs separately without overwriting historical prior_adherence
-      db.updatePatientPrediction(newPatient.patient_id, {
-        risk_score: Math.round(prediction.risk_percentage),
-        risk_level: prediction.risk_level,
-        adherence_probability: prediction.adherence_probability,
-        non_adherence_risk: prediction.non_adherence_risk,
-        risk_percentage: prediction.risk_percentage,
-        risk_factors: prediction.risk_factors,
-        protective_factors: prediction.protective_factors,
-        recommendations: prediction.recommendations,
+      const persistedPatient = await api.post<Patient>('/patients', {
+        ...newPatient,
+        ...(prediction ? {
+          risk_score: Math.round(prediction.risk_percentage),
+          risk_level: prediction.risk_level,
+          adherence_probability: prediction.adherence_probability,
+          non_adherence_risk: prediction.non_adherence_risk,
+          risk_percentage: prediction.risk_percentage,
+          risk_factors: prediction.risk_factors,
+          protective_factors: prediction.protective_factors,
+          recommendations: prediction.recommendations,
+        } : {}),
       });
 
-      setPredictionResult(prediction);
-      setSuccessId(newPatient.patient_id);
       const auth = await api.post<{ access_token: string }>('/auth/patient/login', {
-        patient_id: newPatient.patient_id,
+        patient_id: persistedPatient.patient_id,
         password: formData.password,
       });
       setPatientToken(auth.access_token);
       clearDoctorToken();
+
+      await Promise.all(normalizedMedicationList.map((med, index) => api.post(`/patients/${persistedPatient.patient_id}/medications`, {
+        medicine_id: med.medicine_id || `M${persistedPatient.patient_id.substring(1)}-${index}`,
+        patient_id: persistedPatient.patient_id,
+        medicine_name: med.medicine_name,
+        dose: med.dose,
+        frequency: med.frequency,
+        scheduled_times: med.scheduled_times,
+        start_date: med.start_date || new Date().toISOString().split('T')[0],
+        end_date: med.end_date || new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString().split('T')[0],
+        quantity: med.quantity || 90,
+        refill_interval: med.refill_interval || 30,
+        active: med.active !== false,
+      })));
+
+      setPredictionResult(prediction ?? null);
+      setSuccessId(newPatient.patient_id);
       localStorage.setItem('active_patient_id', newPatient.patient_id);
       setStep(5);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to connect to the prediction service.';
+      const message = error instanceof ApiError
+        ? error.message
+        : 'Unable to connect to the server. Please try again.';
       setError(message);
     } finally {
       setLoading(false);
@@ -305,7 +322,7 @@ export const PatientRegistration: React.FC = () => {
             <p className="text-3xl font-mono font-black text-[var(--primary)]">{successId}</p>
           </div>
 
-          {predictionResult && (
+          {predictionResult ? (
             <div className={`mb-6 rounded-xl border p-4 text-left ${predictionResult.risk_level === 'HIGH' ? 'border-red-200 bg-red-50' : predictionResult.risk_level === 'MEDIUM' ? 'border-amber-200 bg-amber-50' : 'border-green-200 bg-green-50'}`}>
               <div className="flex items-center justify-between gap-3 mb-3">
                 <p className="text-xs uppercase tracking-wider font-bold text-slate-500">Prediction</p>
@@ -357,6 +374,10 @@ export const PatientRegistration: React.FC = () => {
                   </ul>
                 </div>
               )}
+            </div>
+          ) : (
+            <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4 text-left text-sm text-slate-600">
+              Risk assessment pending. It will be generated after patient creation.
             </div>
           )}
 
@@ -616,6 +637,9 @@ export const PatientRegistration: React.FC = () => {
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Adherence Information</h4>
                     <p className="text-sm font-medium text-slate-700">{formData.missed_doses} missed doses • {formData.refill_gap} day refill gap • {formData.missed_appointments} missed appts</p>
                   </div>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+                  Risk assessment will be generated after patient creation.
                 </div>
               </div>
             )}

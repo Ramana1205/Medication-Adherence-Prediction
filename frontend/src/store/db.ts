@@ -462,7 +462,7 @@ class Database {
     return `P${nextNum.toString().padStart(6, '0')}`;
   }
 
-  registerNewPatient(patientData: Partial<Patient>, password?: string, medsCount: number = 1, doseFreq: string = 'Morning', medicationsList?: Partial<Medication>[]): Patient {
+  registerNewPatient(patientData: Partial<Patient>, password?: string, medsCount: number = 1, doseFreq: string = 'Morning', medicationsList?: Partial<Medication>[], persistToBackend = true): Patient {
     const newId = this.generatePatientId();
     const adherence = patientData.prior_adherence || 100;
     const refillGap = patientData.refill_gap_days || 0;
@@ -519,7 +519,7 @@ class Database {
           scheduled_time: time,
           status: 'PENDING' as MedicationStatus
         })));
-        void api.post(`/patients/${newId}/medications`, newMed).catch(() => undefined);
+        if (persistToBackend) void api.post(`/patients/${newId}/medications`, newMed).catch(() => undefined);
       });
     } else {
       for (let j = 0; j < medsCount; j++) {
@@ -545,11 +545,11 @@ class Database {
           scheduled_time: time,
           status: 'PENDING' as MedicationStatus
         })));
-        void api.post(`/patients/${newId}/medications`, newMed).catch(() => undefined);
+        if (persistToBackend) void api.post(`/patients/${newId}/medications`, newMed).catch(() => undefined);
       }
     }
 
-    void api.post('/patients', {
+    if (persistToBackend) void api.post('/patients', {
       patient_id: newId,
       patient_name: newPatient.patient_name,
       age: newPatient.age,

@@ -70,14 +70,19 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
   if (!API_URL) {
     throw new ApiError('The production API URL is not configured.', 0);
   }
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...((getDoctorToken() || getPatientToken()) ? { Authorization: `Bearer ${getDoctorToken() || getPatientToken()}` } : {}),
-      ...(options.headers || {}),
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...((getDoctorToken() || getPatientToken()) ? { Authorization: `Bearer ${getDoctorToken() || getPatientToken()}` } : {}),
+        ...(options.headers || {}),
+      },
+    });
+  } catch {
+    throw new ApiError('Unable to connect to the server. Please try again.', 0);
+  }
 
   if (!response.ok) {
     let errorMessage = 'The request could not be completed.';
@@ -95,6 +100,12 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
       }
     } catch {
       // Ignore JSON parsing issues and use the default message.
+    }
+
+    if (response.status === 401) {
+      errorMessage = 'Authentication required. Please log in again.';
+    } else if (response.status >= 500) {
+      errorMessage = 'Unable to connect to the server. Please try again.';
     }
 
     throw new ApiError(errorMessage, response.status);

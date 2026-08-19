@@ -408,7 +408,9 @@ def list_patient_medications(patient_id: str, user: dict = Depends(require_user)
 
 
 @app.post("/patients/{patient_id}/medications")
-def create_medication_endpoint(patient_id: str, med: dict, _doctor: dict = Depends(require_doctor)):
+def create_medication_endpoint(patient_id: str, med: dict, user: dict = Depends(require_user)):
+    if user["role"] == "PATIENT" and user["sub"] != patient_id:
+        raise HTTPException(status_code=403, detail="Patient access denied")
     return create_medication(patient_id, med)
 
 
