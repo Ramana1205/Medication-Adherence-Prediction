@@ -39,7 +39,6 @@ export const PatientLogin: React.FC = () => {
     try {
       const localPatient = db.authenticatePatient(patientId.trim(), password);
       if (!localPatient) throw new Error('Invalid patient credentials');
-      await api.post('/patients', localPatient);
       const res = await api.post<{ access_token: string; patient: { id: string; name: string; role: string } }>(
         '/auth/patient/login', { patient_id: patientId.trim(), password },
       );

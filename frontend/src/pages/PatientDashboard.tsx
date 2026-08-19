@@ -55,7 +55,7 @@ export const PatientDashboard: React.FC = () => {
     }
 
     try {
-      const patientFromStore = db.getPatient(activeId) || await db.fetchPatientById(activeId);
+      const patientFromStore = await db.fetchPatientById(activeId) || db.getPatient(activeId);
       if (!patientFromStore) {
         localStorage.removeItem('active_patient_id');
         navigate('/patient/auth');
