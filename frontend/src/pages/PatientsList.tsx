@@ -5,7 +5,7 @@ import { Patient, RiskLevel } from '../types';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Search, Plus, UserPlus, X } from 'lucide-react';
-import { predictAdherence } from '../lib/api';
+import { api, predictAdherence } from '../lib/api';
 import type { Medication } from '../types';
 
 export const PatientsList: React.FC = () => {
@@ -228,7 +228,7 @@ const AddPatientForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
       const prediction = await predictAdherence(payload);
 
-      // Register patient and pass medicationsList so db.registerNewPatient persists meds and today's slots
+      // Keep local state isolated until PostgreSQL assigns the patient ID.
       const newPatient = db.registerNewPatient({
         patient_name: patientName,
         age: Number(age),
@@ -239,10 +239,18 @@ const AddPatientForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         refill_gap_days: Number(refillGapDays),
         prior_adherence: Number(priorAdherence),
         _raw_features: payload
-      }, undefined, medicationsList.length, dailyDoseFrequency, medicationsList.map(m => ({ ...m } as Partial<Medication>)));
+      }, undefined, medicationsList.length, dailyDoseFrequency, medicationsList.map(m => ({ ...m } as Partial<Medication>)), false);
 
-      // Persist model outputs
-      db.updatePatientPrediction(newPatient.patient_id, {
+      const persistedPatient = await api.post<Patient>('/patients', {
+        patient_name: newPatient.patient_name,
+        age: newPatient.age,
+        gender: newPatient.gender,
+        chronic_conditions: newPatient.chronic_conditions,
+        num_meds: newPatient.num_meds,
+        prior_adherence: newPatient.prior_adherence,
+        previous_missed_doses: newPatient.previous_missed_doses,
+        previous_missed_refills: newPatient.previous_missed_refills,
+        refill_gap_days: newPatient.refill_gap_days,
         risk_score: Math.round(prediction.risk_percentage),
         risk_level: prediction.risk_level,
         adherence_probability: prediction.adherence_probability,
@@ -252,6 +260,14 @@ const AddPatientForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         protective_factors: prediction.protective_factors,
         recommendations: prediction.recommendations,
       });
+
+      await Promise.all(medicationsList.map((med, index) => api.post(`/patients/${persistedPatient.patient_id}/medications`, {
+        medicine_id: `M${persistedPatient.patient_id.substring(1)}-${index}`,
+        patient_id: persistedPatient.patient_id,
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date(Date.now() + (Math.max(1, medicationDurationDays) - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        ...med,
+      })));
 
       // Ensure at least today's slots exist (db.registerNewPatient already adds slots). Do not generate random events.
 
@@ -282,7 +298,6 @@ const AddPatientForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <select value={gender} onChange={e => setGender(e.target.value as any)} className="w-full border p-2 rounded text-sm">
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
-                <option value="Other">Other</option>
               </select>
             </div>
             <div>

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -123,6 +123,16 @@ class PatientLoginRequest(BaseModel):
 class PatientRecordRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
     age: int = Field(..., ge=0, le=120)
+
+
+class AdherenceSummary(BaseModel):
+    total_scheduled: int
+    taken: int
+    skipped: int
+    adherence: float | None
+    projection: float | None
+    projection_note: str
+    suggestions: list[str]
 
 
 # ============================================================
@@ -426,6 +436,70 @@ def list_patient_events(patient_id: str, user: dict = Depends(require_user)):
     if user["role"] == "PATIENT" and user["sub"] != patient_id:
         raise HTTPException(status_code=403, detail="Patient access denied")
     return fetch_events(patient_id)
+
+
+@app.get("/patients/{patient_id}/adherence", response_model=AdherenceSummary)
+def patient_adherence(patient_id: str, user: dict = Depends(require_user)):
+    if user["role"] == "PATIENT" and user["sub"] != patient_id:
+        raise HTTPException(status_code=403, detail="Patient access denied")
+
+    medications = fetch_medications(patient_id)
+    events = fetch_events(patient_id)
+    today = date.today()
+    scheduled_doses: set[tuple[str, str, str]] = set()
+
+    for medication in medications:
+        start = date.fromisoformat(str(medication["start_date"])) if medication.get("start_date") else today
+        end = date.fromisoformat(str(medication["end_date"])) if medication.get("end_date") else today
+        last_date = min(end, today)
+        if last_date < start or medication.get("active") is False:
+            continue
+        schedule = medication.get("scheduled_times") or ["08:00 AM"]
+        current = start
+        while current <= last_date:
+            for scheduled_time in schedule:
+                scheduled_doses.add((medication["medicine_id"], current.isoformat(), str(scheduled_time)))
+            current += timedelta(days=1)
+
+    valid_events = [
+        event for event in events
+        if (event.get("medicine_id"), event.get("date"), event.get("scheduled_time")) in scheduled_doses
+    ]
+    taken = sum(event.get("status") == "TAKEN" for event in valid_events)
+    skipped = sum(event.get("status") == "SKIPPED" for event in valid_events)
+    total_scheduled = len(scheduled_doses)
+    adherence = (taken / total_scheduled * 100) if total_scheduled else None
+
+    def window_adherence(days: int) -> float | None:
+        cutoff = today - timedelta(days=days)
+        window = [event for event in valid_events if event.get("date") and date.fromisoformat(str(event["date"])) >= cutoff]
+        completed = sum(event.get("status") in {"TAKEN", "SKIPPED"} for event in window)
+        return sum(event.get("status") == "TAKEN" for event in window) / completed * 100 if completed else None
+
+    projection = window_adherence(7)
+    projection_note = "Based on recent (7-day) medication-taking pattern." if projection is not None else ""
+    if projection is None:
+        projection = window_adherence(30)
+        projection_note = "Based on medication history over the last 30 days." if projection is not None else ""
+
+    suggestions: list[str] = []
+    if adherence is not None:
+        if adherence >= 90:
+            suggestions.append("Keep following your current medication schedule.")
+        elif adherence >= 75:
+            suggestions.append("Consider setting reminders for doses that are frequently missed.")
+        else:
+            suggestions.append("You have missed several scheduled doses. Consider discussing any barriers with your doctor.")
+
+    return AdherenceSummary(
+        total_scheduled=total_scheduled,
+        taken=taken,
+        skipped=skipped,
+        adherence=adherence,
+        projection=projection,
+        projection_note=projection_note,
+        suggestions=suggestions,
+    )
 
 
 @app.post("/medication-events")

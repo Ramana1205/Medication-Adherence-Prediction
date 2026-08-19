@@ -29,6 +29,16 @@ export interface PredictionResponse {
   recommendations: string[];
 }
 
+export interface AdherenceResponse {
+  total_scheduled: number;
+  taken: number;
+  skipped: number;
+  adherence: number | null;
+  projection: number | null;
+  projection_note: string;
+  suggestions: string[];
+}
+
 const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
 export const API_URL = configuredApiUrl || (import.meta.env.PROD ? '' : 'http://127.0.0.1:8000');
 

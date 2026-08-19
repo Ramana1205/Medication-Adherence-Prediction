@@ -79,18 +79,18 @@ export const DoctorDashboard: React.FC = () => {
     { name: 'Low Risk', value: lowRisk.length, color: '#10b981' },
   ];
 
-  // Dummy Trend Data
+  // Trend view uses deterministic persisted patient values.
   const trendData = Array.from({length: 6}).map((_, i) => ({
     name: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'][i],
-    previous: 70 + Math.random() * 10,
-    recent: 72 + Math.random() * 10 + (i * 2)
+    previous: Number((totalAdherence / Math.max(totalPatients, 1)).toFixed(1)),
+    recent: Number((totalAdherence / Math.max(totalPatients, 1)).toFixed(1))
   }));
 
-  // Early Warning Alerts (Mocked based on data)
+  // Early warning alerts use persisted patient values.
   const alerts = needingAttention.slice(0, 3).map(p => ({
     id: p.patient_id,
     name: p.patient_name,
-    prevAdherence: p.prior_adherence + Math.floor(Math.random() * 15),
+    prevAdherence: p.prior_adherence,
     currentAdherence: p.prior_adherence,
     priority: p.risk_level,
     reason: p.refill_gap_days > 7 ? 'Refill gap > 7 days' : 'Frequent missed doses'

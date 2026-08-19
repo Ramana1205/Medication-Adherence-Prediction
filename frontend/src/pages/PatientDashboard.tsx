@@ -3,7 +3,7 @@ import { db } from '../store/db';
 import { Patient, MedicationSlot, Medication, Notification } from '../types';
 import { HeartPulse, Bell, MessageSquare, CheckCircle2, XCircle, Clock, Check, X, Calendar as CalendarIcon, User, Home, ChevronRight, LogOut, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { clearPatientToken } from '../lib/api';
+import { api, clearPatientToken, type AdherenceResponse } from '../lib/api';
 
 // Calendar generation and status helpers (deterministic, driven from persisted events)
 const formatDateKey = (year: number, monthIndex: number, day: number) => {
@@ -46,6 +46,7 @@ export const PatientDashboard: React.FC = () => {
 
   const [showNotifs, setShowNotifs] = useState(false);
   const [patientNotifications, setPatientNotifications] = useState<Notification[]>([]);
+  const [adherenceStats, setAdherenceStats] = useState<AdherenceResponse | null>(null);
 
   const loadData = async () => {
     const activeId = localStorage.getItem('active_patient_id');
@@ -62,13 +63,15 @@ export const PatientDashboard: React.FC = () => {
         return;
       }
 
-      const [patientMeds, patientEvents] = await Promise.all([
+      const [patientMeds, patientEvents, adherence] = await Promise.all([
         db.refreshPatientMedications(patientFromStore.patient_id),
         db.refreshPatientEvents(patientFromStore.patient_id),
+        api.get<AdherenceResponse>(`/patients/${patientFromStore.patient_id}/adherence`),
       ]);
 
       setPatient(patientFromStore);
       setMeds(patientMeds);
+      setAdherenceStats(adherence);
       setSlots(db.getTodaySlots(patientFromStore.patient_id));
 
       if (patientEvents.length > 0) {
@@ -78,15 +81,9 @@ export const PatientDashboard: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to hydrate patient data from backend:', error);
-      const fallbackPatient = db.getPatient(activeId);
-      if (fallbackPatient) {
-        setPatient(fallbackPatient);
-        setMeds(db.getMedications(fallbackPatient.patient_id));
-        setSlots(db.getTodaySlots(fallbackPatient.patient_id));
-      } else {
-        localStorage.removeItem('active_patient_id');
-        navigate('/patient/auth');
-      }
+      setMeds([]);
+      setSlots([]);
+      setAdherenceStats(null);
     } finally {
       setLoading(false);
     }
@@ -96,9 +93,9 @@ export const PatientDashboard: React.FC = () => {
     void loadData();
   }, []);
 
-  const handleTookMedicine = (slotId: string) => {
-    db.logMedicationEvent(slotId, 'TAKEN');
-    loadData();
+  const handleTookMedicine = async (slotId: string) => {
+    await db.logMedicationEvent(slotId, 'TAKEN');
+    await loadData();
   };
 
   const handleSkipClick = (slotId: string) => {
@@ -106,12 +103,12 @@ export const PatientDashboard: React.FC = () => {
     setSkipModalOpen(true);
   };
 
-  const handleSkipConfirm = (reason: string) => {
+  const handleSkipConfirm = async (reason: string) => {
     if (selectedSlotForSkip) {
-      db.logMedicationEvent(selectedSlotForSkip, 'SKIPPED', reason);
+      await db.logMedicationEvent(selectedSlotForSkip, 'SKIPPED', reason);
       setSkipModalOpen(false);
       setSelectedSlotForSkip(null);
-      loadData();
+      await loadData();
     }
   };
 
@@ -173,65 +170,15 @@ export const PatientDashboard: React.FC = () => {
 
   const p = patient as Patient;
 
-  const computeAdherenceStats = (patientId: string) => {
-    // Use persisted medication events as source of truth
-    const allEvents = (db as any).state?.events || [];
-    const patientEvents = allEvents.filter((e:any) => e.patient_id === patientId);
-    const totalScheduled = patientEvents.filter((e:any) => e.status === 'TAKEN' || e.status === 'SKIPPED').length;
-    const taken = patientEvents.filter((e:any) => e.status === 'TAKEN').length;
-    const skipped = patientEvents.filter((e:any) => e.status === 'SKIPPED').length;
-    const adherence = totalScheduled > 0 ? (taken / totalScheduled) * 100 : null;
-
-    // Recent windows for simple projection
-    const now = new Date();
-    const last7 = patientEvents.filter((e:any) => new Date(e.date) >= new Date(now.getFullYear(), now.getMonth(), now.getDate()-7));
-    const last30 = patientEvents.filter((e:any) => new Date(e.date) >= new Date(now.getFullYear(), now.getMonth(), now.getDate()-30));
-    const calc = (arr:any[]) => {
-      const t = arr.filter(a=>a.status==='TAKEN').length + arr.filter(a=>a.status==='SKIPPED').length;
-      return t > 0 ? (arr.filter(a=>a.status==='TAKEN').length / t) * 100 : null;
-    };
-    const last7Adh = calc(last7);
-    const last30Adh = calc(last30);
-
-    let projection: number | null = null;
-    let projectionNote = '';
-    if (last7Adh !== null) {
-      projection = last7Adh; // simple: if recent pattern continues
-      projectionNote = 'Based on recent (7-day) medication-taking pattern.';
-    } else if (last30Adh !== null) {
-      projection = last30Adh;
-      projectionNote = 'Based on medication history over the last 30 days.';
-    }
-
-    // Suggestions
-    const suggestions: string[] = [];
-    if (adherence === null) {
-      // no data
-    } else {
-      if (adherence >= 90) suggestions.push('Keep following your current medication schedule.');
-      else if (adherence >= 75) suggestions.push('Consider setting reminders for doses that are frequently missed.');
-      else suggestions.push('You have missed several scheduled doses. Consider discussing any barriers with your doctor.');
-
-      // Evening misses
-      const eveningSkips = patientEvents.filter((e:any) => e.status === 'SKIPPED' && e.scheduled_time && e.scheduled_time.includes('PM')).length;
-      if (eveningSkips >= 2) suggestions.push('Evening doses are frequently missed — consider an evening reminder or rescheduling.');
-
-      // refill gap
-      if (p.refill_gap_days && p.refill_gap_days > 14) suggestions.push("Review patient's refill status to avoid running out of medication.");
-    }
-
-    return {
-      totalScheduled,
-      taken,
-      skipped,
-      adherence,
-      projection,
-      projectionNote,
-      suggestions
-    };
-  };
-
-  const stats = p ? computeAdherenceStats(p.patient_id) : null;
+  const stats = adherenceStats ? {
+    totalScheduled: adherenceStats.total_scheduled,
+    taken: adherenceStats.taken,
+    skipped: adherenceStats.skipped,
+    adherence: adherenceStats.adherence,
+    projection: adherenceStats.projection,
+    projectionNote: adherenceStats.projection_note,
+    suggestions: adherenceStats.suggestions,
+  } : null;
 
   const adherenceModal = (
     <div className={`fixed inset-0 z-50 flex items-center justify-center ${showAdherence ? '' : 'pointer-events-none opacity-0'}`}>

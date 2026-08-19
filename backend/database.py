@@ -184,12 +184,19 @@ def fetch_patient_by_id(patient_id: str) -> Optional[Dict[str, Any]]:
 
 
 def create_patient(payload: Dict[str, Any]) -> Dict[str, Any]:
-    patient_id = payload.get("patient_id") or payload.get("patientId")
-    if not patient_id:
-        raise ValueError("patient_id is required")
-
     with get_connection() as conn:
         with conn.cursor() as cur:
+            # Serialize allocation so concurrent registrations cannot select the same next ID.
+            cur.execute("SELECT pg_advisory_xact_lock(hashtext('medivia.patient_id'))")
+            cur.execute(
+                """
+                SELECT COALESCE(MAX(CAST(SUBSTRING(patient_id FROM 2) AS BIGINT)), 4000) AS highest_id
+                FROM patients
+                WHERE patient_id ~ '^P[0-9]+$'
+                """
+            )
+            highest_id = int(cur.fetchone()["highest_id"])
+            patient_id = f"P{highest_id + 1:06d}"
             cur.execute(
                 """
                 INSERT INTO patients (
@@ -205,26 +212,6 @@ def create_patient(payload: Dict[str, Any]) -> Dict[str, Any]:
                     %s, %s, %s,
                     %s, %s, %s, %s
                 )
-                ON CONFLICT (patient_id) DO UPDATE SET
-                    patient_name = EXCLUDED.patient_name,
-                    age = EXCLUDED.age,
-                    gender = EXCLUDED.gender,
-                    chronic_conditions = EXCLUDED.chronic_conditions,
-                    num_meds = EXCLUDED.num_meds,
-                    prior_adherence = EXCLUDED.prior_adherence,
-                    previous_missed_doses = EXCLUDED.previous_missed_doses,
-                    previous_missed_refills = EXCLUDED.previous_missed_refills,
-                    refill_gap_days = EXCLUDED.refill_gap_days,
-                    risk_score = EXCLUDED.risk_score,
-                    risk_level = EXCLUDED.risk_level,
-                    adherence_probability = EXCLUDED.adherence_probability,
-                    non_adherence_risk = EXCLUDED.non_adherence_risk,
-                    risk_percentage = EXCLUDED.risk_percentage,
-                    risk_factors = EXCLUDED.risk_factors,
-                    protective_factors = EXCLUDED.protective_factors,
-                    recommendations = EXCLUDED.recommendations,
-                    password_hash = EXCLUDED.password_hash,
-                    created_at = COALESCE(patients.created_at, EXCLUDED.created_at)
                 RETURNING *;
                 """,
                 (
@@ -365,14 +352,23 @@ def create_medication(patient_id: str, payload: Dict[str, Any]) -> Dict[str, Any
 def fetch_events(patient_id: str) -> List[Dict[str, Any]]:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM medication_events WHERE patient_id = %s ORDER BY timestamp ASC", (patient_id,))
+            cur.execute(
+                """
+                SELECT DISTINCT ON (medicine_id, date, scheduled_time) *
+                FROM medication_events
+                WHERE patient_id = %s
+                ORDER BY medicine_id, date, scheduled_time, timestamp DESC
+                """,
+                (patient_id,),
+            )
             return [dict(r) for r in cur.fetchall()]
 
 
 def create_medication_event(payload: Dict[str, Any]) -> Dict[str, Any]:
-    event_id = payload.get("event_id")
-    if not event_id:
-        event_id = f"E-{payload.get('medicine_id')}-{payload.get('date')}-{payload.get('scheduled_time', '').replace(':', '').replace(' ', '')}"
+    event_id = (
+        f"E-{payload.get('patient_id')}-{payload.get('medicine_id')}-"
+        f"{payload.get('date')}-{payload.get('scheduled_time', '').replace(':', '').replace(' ', '')}"
+    )
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(

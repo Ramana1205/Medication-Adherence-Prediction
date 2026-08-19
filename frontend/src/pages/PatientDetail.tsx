@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { db } from '../store/db';
-import { Patient, Medication } from '../types';
+import { Patient, Medication, MedicationEvent } from '../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ChevronLeft, AlertTriangle, ShieldAlert, CheckCircle2, Pill, Clock, Activity, Bell } from 'lucide-react';
@@ -12,13 +12,17 @@ export const PatientDetail: React.FC = () => {
   const navigate = useNavigate();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [meds, setMeds] = useState<Medication[]>([]);
+  const [events, setEvents] = useState<MedicationEvent[]>([]);
   const [interventionStatus, setInterventionStatus] = useState<'Pending' | 'In Progress' | 'Completed'>('Pending');
 
   useEffect(() => {
     if (!id) return;
     void api.get<Patient>(`/patients/${id}`).then((loadedPatient) => {
       setPatient(loadedPatient);
-      return api.get<Medication[]>(`/patients/${id}/medications`).then(setMeds);
+      return Promise.all([
+        api.get<Medication[]>(`/patients/${id}/medications`).then(setMeds),
+        api.get<MedicationEvent[]>(`/patients/${id}/events`).then(setEvents),
+      ]);
     }).catch((error) => {
       console.error(`Failed to load patient ${id}:`, error);
     });
@@ -167,8 +171,11 @@ export const PatientDetail: React.FC = () => {
           </CardHeader>
           <CardContent className="pt-6 space-y-5">
             {meds.map((m, i) => {
-              // Mocking specific med adherence for the demo based on general adherence
-              const mockAdherence = Math.min(100, Math.max(0, patient.prior_adherence + (i === 1 ? -25 : i * 10)));
+              const medEvents = events.filter(event => event.medicine_id === m.medicine_id);
+              const taken = medEvents.filter(event => event.status === 'TAKEN').length;
+              const skipped = medEvents.filter(event => event.status === 'SKIPPED').length;
+              const recorded = taken + skipped;
+              const adherence = recorded > 0 ? (taken / recorded) * 100 : null;
               return (
                 <div key={m.medicine_id} className="flex justify-between items-center pb-4 border-b border-slate-50 last:border-0 last:pb-0">
                   <div>
@@ -176,10 +183,8 @@ export const PatientDetail: React.FC = () => {
                     <p className="text-xs text-slate-500 mt-0.5">{m.frequency}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-black text-lg text-slate-800">{mockAdherence}% <span className="text-xs font-medium text-slate-500">adherence</span></p>
-                    <p className={`text-xs font-bold mt-1 flex items-center justify-end gap-1 ${mockAdherence > 80 ? 'text-green-600' : mockAdherence > 60 ? 'text-amber-600' : 'text-red-600'}`}>
-                      {mockAdherence > 80 ? '🟢 Low risk' : mockAdherence > 60 ? '🟡 Medium risk' : '🔴 High risk'}
-                    </p>
+                    <p className="font-black text-lg text-slate-800">{adherence === null ? 'No history' : `${adherence.toFixed(2)}%`} <span className="text-xs font-medium text-slate-500">recorded adherence</span></p>
+                    <p className="text-xs font-bold mt-1 text-slate-500">{taken} taken • {skipped} skipped</p>
                   </div>
                 </div>
               )
@@ -195,30 +200,8 @@ export const PatientDetail: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="space-y-4 mb-6">
-              <div className="flex items-center justify-between text-sm">
-                <span className="w-24 text-slate-600 font-medium">Morning</span>
-                <div className="flex-1 mx-4 h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-[var(--primary)] w-[21%] rounded-full"></div></div>
-                <span className="w-12 text-right font-bold text-slate-700">21%</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="w-24 text-slate-600 font-medium">Afternoon</span>
-                <div className="flex-1 mx-4 h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-[var(--primary)] w-[34%] rounded-full"></div></div>
-                <span className="w-12 text-right font-bold text-slate-700">34%</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="w-24 text-slate-600 font-medium">Evening</span>
-                <div className="flex-1 mx-4 h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-red-400 w-[76%] rounded-full"></div></div>
-                <span className="w-12 text-right font-bold text-slate-700">76%</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="w-24 text-slate-600 font-medium">Night</span>
-                <div className="flex-1 mx-4 h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-amber-400 w-[48%] rounded-full"></div></div>
-                <span className="w-12 text-right font-bold text-slate-700">48%</span>
-              </div>
-            </div>
-            <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-700 font-medium flex items-center gap-2">
-              <AlertTriangle size={16} /> Evening doses are missed most frequently.
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 font-medium flex items-center gap-2">
+              <AlertTriangle size={16} /> Time-based patterns are shown only when persisted dose history is available.
             </div>
           </CardContent>
         </Card>

@@ -229,6 +229,8 @@ export const PatientRegistration: React.FC = () => {
         ...med,
         frequency: med.frequency || 'Once daily',
         scheduled_times: normalizeMedicationSchedule(med),
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date(Date.now() + (Math.max(1, parsedMedicationDurationDays || 30) - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       }));
 
       const newPatient = db.registerNewPatient({
@@ -255,10 +257,21 @@ export const PatientRegistration: React.FC = () => {
           gender_M: parsedGenderM,
           gender_F: parsedGenderF,
         },
-      }, formData.password, parsedNumMeds, formData.dose_freq, normalizedMedicationList.length ? normalizedMedicationList : undefined, false);
+      }, formData.password, normalizedMedicationList.length, formData.dose_freq, normalizedMedicationList, false);
 
       const persistedPatient = await api.post<Patient>('/patients', {
-        ...newPatient,
+        patient_name: newPatient.patient_name,
+        age: newPatient.age,
+        gender: newPatient.gender,
+        condition: newPatient.condition,
+        chronic_conditions: newPatient.chronic_conditions,
+        num_meds: newPatient.num_meds,
+        prior_adherence: newPatient.prior_adherence,
+        previous_missed_doses: newPatient.previous_missed_doses,
+        previous_missed_refills: newPatient.previous_missed_refills,
+        refill_gap_days: newPatient.refill_gap_days,
+        password_hash: newPatient.password_hash,
+        created_at: newPatient.created_at,
         ...(prediction ? {
           risk_score: Math.round(prediction.risk_percentage),
           risk_level: prediction.risk_level,
@@ -293,8 +306,8 @@ export const PatientRegistration: React.FC = () => {
       })));
 
       setPredictionResult(prediction ?? null);
-      setSuccessId(newPatient.patient_id);
-      localStorage.setItem('active_patient_id', newPatient.patient_id);
+      setSuccessId(persistedPatient.patient_id);
+      localStorage.setItem('active_patient_id', persistedPatient.patient_id);
       setStep(5);
     } catch (error) {
       const message = error instanceof ApiError
@@ -460,7 +473,6 @@ export const PatientRegistration: React.FC = () => {
                       <option value="">Select...</option>
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
-                      <option value="Other">Other</option>
                     </select>
                   </div>
                 </div>
