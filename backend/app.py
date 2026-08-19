@@ -25,7 +25,6 @@ from backend.database import (
     create_message,
     create_notification,
     create_patient,
-    ensure_demo_patient_seed,
     fetch_all_messages,
     fetch_all_patients,
     fetch_events,
@@ -68,7 +67,6 @@ app.add_middleware(
 @app.on_event("startup")
 def startup_event():
     init_db()
-    ensure_demo_patient_seed()
 
 
 # ============================================================

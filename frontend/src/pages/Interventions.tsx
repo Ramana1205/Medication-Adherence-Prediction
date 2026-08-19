@@ -3,15 +3,20 @@ import { db } from '../store/db';
 
 export const Interventions: React.FC = () => {
   const [interventions, setInterventions] = useState<any[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    setInterventions(db.getInterventions());
+    void db.loadInterventions().then(setInterventions).catch((error) => {
+      console.error('Failed to load interventions:', error);
+      setLoadError('Unable to load interventions from the backend.');
+    });
   }, []);
 
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">Interventions</h2>
       <div className="bg-white rounded shadow p-4">
+        {loadError ? <div className="text-red-700">{loadError}</div> : null}
         {interventions.length === 0 ? (
           <div className="text-slate-500">No interventions logged.</div>
         ) : (

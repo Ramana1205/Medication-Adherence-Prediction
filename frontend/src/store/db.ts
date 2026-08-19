@@ -56,13 +56,13 @@ class Database {
     if (!getDoctorToken() && !getPatientToken()) return;
     try {
       const [patients, notifications, messages, interventions] = await Promise.all([
-        api.get<Patient[]>('/patients').catch(() => this.state.patients),
+        api.get<Patient[]>('/patients'),
         api.get<Notification[]>('/notifications').catch(() => this.state.notifications),
         api.get<Message[]>('/messages').catch(() => this.state.messages),
         api.get<any[]>('/interventions').catch(() => this.state.interventions)
       ]);
 
-      this.state.patients = patients || this.state.patients;
+      this.state.patients = patients;
       this.state.notifications = notifications || this.state.notifications;
       this.state.messages = messages || this.state.messages;
       this.state.interventions = interventions || this.state.interventions;
@@ -71,8 +71,20 @@ class Database {
         this.refreshAllEvents(),
       ]);
     } catch (error) {
-      console.warn('Unable to load shared data from backend; using in-memory fallback.', error);
+      console.error('Unable to load shared data from backend.', error);
     }
+  }
+
+  async loadPatients(): Promise<Patient[]> {
+    const patients = await api.get<Patient[]>('/patients');
+    this.state.patients = patients;
+    return patients;
+  }
+
+  async loadInterventions(): Promise<import('../types').Intervention[]> {
+    const interventions = await api.get<import('../types').Intervention[]>('/interventions');
+    this.state.interventions = interventions;
+    return interventions;
   }
 
   async fetchPatientById(patientId: string): Promise<Patient | null> {
@@ -188,8 +200,8 @@ class Database {
       this.state.messages = messages || [];
       return messages || [];
     } catch (error) {
-      console.warn('Failed to fetch all messages:', error);
-      return this.state.messages.slice();
+      console.error('Failed to fetch all messages:', error);
+      throw error;
     }
   }
 

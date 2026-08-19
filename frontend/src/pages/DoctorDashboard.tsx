@@ -9,11 +9,25 @@ import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 export const DoctorDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'ALL' | 'HIGH' | 'MEDIUM' | 'LOW'>('ALL');
 
   useEffect(() => {
-    setPatients(db.getPatients());
+    let active = true;
+    void db.loadPatients()
+      .then((loadedPatients) => {
+        if (active) setPatients(loadedPatients);
+      })
+      .catch((error) => {
+        console.error('Failed to load doctor dashboard patients:', error);
+        if (active) setLoadError('Unable to load patient data from the backend.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
   }, []);
 
   // High-risk patients priority list (use backend risk_level as source of truth)
@@ -29,6 +43,8 @@ export const DoctorDashboard: React.FC = () => {
 
   const topHighRisk = useMemo(() => highRiskPatients.slice(0,5), [highRiskPatients]);
 
+  if (loading) return <div className="p-6">Loading patient data...</div>;
+  if (loadError) return <div className="p-6 text-red-700">{loadError}</div>;
   if (patients.length === 0) return <div className="p-6">No patients available.</div>;
 
   const filteredPatients = patients.filter(p => {

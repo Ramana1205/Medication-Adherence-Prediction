@@ -3,15 +3,22 @@ import { db } from '../store/db';
 
 export const RiskAlerts: React.FC = () => {
   const [patients, setPatients] = useState<any[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    setPatients(db.getPatients().filter((p:any) => p.risk_level === 'HIGH' || p.risk_level === 'MEDIUM'));
+    void db.loadPatients()
+      .then(loaded => setPatients(loaded.filter((p:any) => p.risk_level === 'HIGH' || p.risk_level === 'MEDIUM')))
+      .catch((error) => {
+        console.error('Failed to load risk alerts:', error);
+        setLoadError('Unable to load risk data from the backend.');
+      });
   }, []);
 
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">Risk & Alerts</h2>
       <div className="bg-white rounded shadow p-4">
+        {loadError ? <div className="text-red-700">{loadError}</div> : null}
         {patients.length === 0 ? (
           <div className="text-slate-500">No current alerts.</div>
         ) : (

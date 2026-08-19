@@ -13,6 +13,7 @@ export const DoctorMessages: React.FC = () => {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [patients, setPatients] = useState<import('../types').Patient[]>([]);
 
   const location = useLocation();
 
@@ -29,6 +30,9 @@ export const DoctorMessages: React.FC = () => {
     };
 
     loadConversations();
+    void db.loadPatients().then(setPatients).catch((error) => {
+      console.error('Failed to load message patients:', error);
+    });
     
     // Refresh conversations every 5 seconds
     const interval = setInterval(loadConversations, 5000);
@@ -85,7 +89,6 @@ export const DoctorMessages: React.FC = () => {
     }
   };
 
-  const patients = db.getPatients();
   const filtered = patients
     .filter(p => p.patient_id.includes(search) || p.patient_name.toLowerCase().includes(search.toLowerCase()))
     .sort((a,b) => {

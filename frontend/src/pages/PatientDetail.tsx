@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { api } from '../lib/api';
 import { db } from '../store/db';
 import { Patient, Medication } from '../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
@@ -14,13 +15,13 @@ export const PatientDetail: React.FC = () => {
   const [interventionStatus, setInterventionStatus] = useState<'Pending' | 'In Progress' | 'Completed'>('Pending');
 
   useEffect(() => {
-    if (id) {
-      const p = db.getPatient(id);
-      if (p) {
-        setPatient(p);
-        setMeds(db.getMedications(id));
-      }
-    }
+    if (!id) return;
+    void api.get<Patient>(`/patients/${id}`).then((loadedPatient) => {
+      setPatient(loadedPatient);
+      return api.get<Medication[]>(`/patients/${id}/medications`).then(setMeds);
+    }).catch((error) => {
+      console.error(`Failed to load patient ${id}:`, error);
+    });
   }, [id]);
 
   if (!patient) return <div className="p-6">Loading patient...</div>;

@@ -31,6 +31,8 @@ export const DoctorLogin: React.FC = () => {
         setError('You are not authorized to use the doctor portal.');
       } else if (error instanceof ApiError && error.status === 422) {
         setError('Please enter a valid doctor ID or email and password.');
+      } else if (error instanceof ApiError && error.status >= 500 && error.status !== 503) {
+        setError('The authentication backend encountered an error. Please try again.');
       } else if (error instanceof ApiError && error.status === 503) {
         setError(error.message.includes('not configured')
           ? 'Doctor authentication is not configured on the server. Contact the administrator.'

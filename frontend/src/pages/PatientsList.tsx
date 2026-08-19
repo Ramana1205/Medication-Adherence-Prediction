@@ -14,11 +14,15 @@ export const PatientsList: React.FC = () => {
   const [search, setSearch] = useState('');
   const [riskFilter, setRiskFilter] = useState<string>('ALL');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const location = useLocation();
 
   useEffect(() => {
-    setPatients(db.getPatients());
+    void db.loadPatients().then(setPatients).catch((error) => {
+      console.error('Failed to load patients:', error);
+      setLoadError('Unable to load patient data from the backend.');
+    });
     const q = new URLSearchParams(location.search);
     const f = q.get('filter');
     if (f) setRiskFilter(f);
@@ -30,6 +34,8 @@ export const PatientsList: React.FC = () => {
     .filter(p => p.patient_name.toLowerCase().includes(search.toLowerCase()) || p.patient_id.toLowerCase().includes(search.toLowerCase()))
     .filter(p => riskFilter === 'ALL' || p.risk_level === riskFilter)
     .sort((a, b) => getRiskValue(b) - getRiskValue(a));
+
+  if (loadError) return <div className="p-6 text-red-700">{loadError}</div>;
 
   return (
     <div className="space-y-6">
@@ -127,7 +133,13 @@ export const PatientsList: React.FC = () => {
             </div>
 
             {/* Form state */}
-            <AddPatientForm onClose={() => { setShowAddModal(false); setPatients(db.getPatients()); }} />
+            <AddPatientForm onClose={() => {
+              setShowAddModal(false);
+              void db.loadPatients().then(setPatients).catch((error) => {
+                console.error('Failed to refresh patients:', error);
+                setLoadError('Unable to refresh patient data from the backend.');
+              });
+            }} />
 
           </div>
         </div>

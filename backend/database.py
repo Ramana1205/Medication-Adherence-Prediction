@@ -562,70 +562,10 @@ def update_intervention_status(intervention_id: str, status: str) -> Optional[Di
             return dict(row) if row else None
 
 
-def ensure_demo_patient_seed() -> None:
-    patient = fetch_patient_by_id("P004001")
-    if patient:
-        return
-    create_patient(
-        {
-            "patient_id": "P004001",
-            "patient_name": "Demo Patient",
-            "age": 58,
-            "gender": "Female",
-            "condition": "Type 2 Diabetes",
-            "chronic_conditions": 2,
-            "num_meds": 3,
-            "prior_adherence": 78,
-            "previous_missed_doses": 6,
-            "previous_missed_refills": 1,
-            "refill_gap_days": 20,
-            "risk_score": 60,
-            "risk_level": "MEDIUM",
-            "created_at": None,
-        }
-    )
-    meds = [
-        {"medicine_id": "M004001-0", "patient_id": "P004001", "medicine_name": "Metformin", "dose": "500 mg", "frequency": "Twice daily", "scheduled_times": ["08:00 AM", "08:00 PM"]},
-        {"medicine_id": "M004001-1", "patient_id": "P004001", "medicine_name": "Atorvastatin", "dose": "10 mg", "frequency": "Once daily", "scheduled_times": ["08:00 PM"]},
-        {"medicine_id": "M004001-2", "patient_id": "P004001", "medicine_name": "Lisinopril", "dose": "20 mg", "frequency": "Once daily", "scheduled_times": ["08:00 AM"]},
-    ]
-    for med in meds:
-        create_medication("P004001", med)
-
-    today = __import__("datetime").datetime.utcnow()
-    for day_offset in range(1, 31):
-        day = today.date() - __import__("datetime").timedelta(days=day_offset)
-        date_str = day.isoformat()
-        for med_index, med in enumerate(meds):
-            for time_value in med["scheduled_times"]:
-                idx = day_offset + med_index + med["scheduled_times"].index(time_value)
-                if idx % 7 == 0:
-                    status = "SKIPPED"
-                    skip_reason = "Forgot to take"
-                elif idx % 5 == 0:
-                    status = "SKIPPED"
-                    skip_reason = "Partial adherence"
-                else:
-                    status = "TAKEN"
-                    skip_reason = None
-                create_medication_event({
-                    "event_id": f"E-{med['medicine_id']}-{date_str}-{time_value.replace(':', '').replace(' ', '')}",
-                    "patient_id": "P004001",
-                    "medicine_id": med["medicine_id"],
-                    "slot_id": f"S-{med['medicine_id']}-{date_str}-{time_value}",
-                    "date": date_str,
-                    "scheduled_time": time_value,
-                    "status": status,
-                    "skip_reason": skip_reason,
-                    "timestamp": __import__("datetime").datetime.utcnow().isoformat(),
-                })
-
-
 __all__ = [
     "DATABASE_URL",
     "get_connection",
     "init_db",
-    "ensure_demo_patient_seed",
     "fetch_all_patients",
     "fetch_patient_by_id",
     "create_patient",
