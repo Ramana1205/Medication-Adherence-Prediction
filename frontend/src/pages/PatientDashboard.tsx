@@ -290,11 +290,11 @@ export const PatientDashboard: React.FC = () => {
                 <div className="grid grid-cols-2 gap-3 text-sm text-slate-700 mt-2">
                   <div>
                     <div className="text-xs text-slate-500 uppercase tracking-wider">Predicted risk %</div>
-                    <div className="font-bold">{(p.risk_percentage ?? p.risk_score ?? 0).toFixed(2)}%</div>
+                    <div className="font-bold">{typeof p.risk_percentage === 'number' ? `${p.risk_percentage.toFixed(2)}%` : typeof p.risk_score === 'number' ? `${p.risk_score.toFixed(2)}%` : 'Not available'}</div>
                   </div>
                   <div>
                     <div className="text-xs text-slate-500 uppercase tracking-wider">Adherence probability</div>
-                    <div className="font-bold">{( (p.adherence_probability ?? 0) * 100 ).toFixed(2)}%</div>
+                    <div className="font-bold">{typeof p.adherence_probability === 'number' ? `${(p.adherence_probability * 100).toFixed(2)}%` : 'Not enough history'}</div>
                   </div>
                 </div>
 

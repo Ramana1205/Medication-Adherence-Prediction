@@ -169,8 +169,14 @@ def predict(patient: PatientData):
     patient_df = pd.DataFrame([data])
     prediction = int(model.predict(patient_df)[0])
     probabilities = model.predict_proba(patient_df)[0]
-    adherence_probability = float(probabilities[1])
-    non_adherence_probability = float(probabilities[0])
+    class_probabilities = {
+        int(model_class): float(probability)
+        for model_class, probability in zip(model.classes_, probabilities)
+    }
+    adherence_probability = class_probabilities.get(1)
+    non_adherence_probability = class_probabilities.get(0)
+    if adherence_probability is None or non_adherence_probability is None:
+        raise HTTPException(status_code=500, detail="The prediction model does not contain both adherence classes")
 
     if non_adherence_probability >= 0.60:
         risk_level = "HIGH"
@@ -338,10 +344,6 @@ def predict(patient: PatientData):
     }
 
 
-@app.get("/auth/patient/me")
-def patient_me(patient: dict = Depends(require_patient)):
-    return {"id": patient["sub"], "name": patient.get("name", "Patient"), "role": patient["role"]}
-
     for feat, val, contrib, _abs in top_features:
         msg, tag, positive = interpret_feature(feat, val, contrib)
         if contrib > 0:
@@ -366,6 +368,11 @@ def patient_me(patient: dict = Depends(require_patient)):
         "protective_factors": protective_factors,
         "recommendations": recommendations,
     }
+
+
+@app.get("/auth/patient/me")
+def patient_me(patient: dict = Depends(require_patient)):
+    return {"id": patient["sub"], "name": patient.get("name", "Patient"), "role": patient["role"]}
 
 
 # ============================================================
