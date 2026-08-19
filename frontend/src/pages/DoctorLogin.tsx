@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { HeartPulse, ArrowLeft } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { db } from '../store/db';
-import { api, clearPatientToken, setDoctorToken } from '../lib/api';
+import { ApiError, api, clearPatientToken, setDoctorToken } from '../lib/api';
 
 export const DoctorLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -24,9 +24,20 @@ export const DoctorLogin: React.FC = () => {
       db.setAuthSession(res.doctor);
       navigate('/doctor/dashboard');
     } catch (error) {
-      setError(error instanceof Error && error.message.includes('not configured')
-        ? 'Doctor authentication is not configured on the server. Contact the administrator.'
-        : 'Invalid doctor credentials.');
+      console.error('Doctor login failed:', error);
+      if (error instanceof ApiError && error.status === 401) {
+        setError('Invalid doctor credentials.');
+      } else if (error instanceof ApiError && error.status === 403) {
+        setError('You are not authorized to use the doctor portal.');
+      } else if (error instanceof ApiError && error.status === 422) {
+        setError('Please enter a valid doctor ID or email and password.');
+      } else if (error instanceof ApiError && error.status === 503) {
+        setError(error.message.includes('not configured')
+          ? 'Doctor authentication is not configured on the server. Contact the administrator.'
+          : 'The authentication service is temporarily unavailable. Please try again.');
+      } else {
+        setError('Unable to connect to the authentication server. Please try again.');
+      }
       return;
     }
   };

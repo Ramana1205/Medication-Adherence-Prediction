@@ -29,8 +29,15 @@ export interface PredictionResponse {
   recommendations: string[];
 }
 
-export const API_URL =
-  import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+export const API_URL = configuredApiUrl || (import.meta.env.PROD ? '' : 'http://127.0.0.1:8000');
+
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
 
 const DOCTOR_TOKEN_KEY = 'medadhere_doctor_access_token';
 const PATIENT_TOKEN_KEY = 'medadhere_patient_access_token';
@@ -60,6 +67,9 @@ export function setPatientToken(token: string) {
 }
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+  if (!API_URL) {
+    throw new ApiError('The production API URL is not configured.', 0);
+  }
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
@@ -87,9 +97,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
       // Ignore JSON parsing issues and use the default message.
     }
 
-    const error = new Error(errorMessage) as Error & { status?: number };
-    error.status = response.status;
-    throw error;
+    throw new ApiError(errorMessage, response.status);
   }
 
   if (response.status === 204) {

@@ -139,6 +139,11 @@ def root():
     }
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.post("/auth/doctor/login")
 def doctor_login(payload: DoctorLoginRequest):
     doctor = authenticate_doctor(payload.identifier, payload.password)
