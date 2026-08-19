@@ -32,11 +32,26 @@ export interface PredictionResponse {
 export const API_URL =
   import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
+const DOCTOR_TOKEN_KEY = 'medadhere_doctor_access_token';
+
+export function getDoctorToken(): string | null {
+  return sessionStorage.getItem(DOCTOR_TOKEN_KEY);
+}
+
+export function clearDoctorToken() {
+  sessionStorage.removeItem(DOCTOR_TOKEN_KEY);
+}
+
+export function setDoctorToken(token: string) {
+  sessionStorage.setItem(DOCTOR_TOKEN_KEY, token);
+}
+
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(getDoctorToken() ? { Authorization: `Bearer ${getDoctorToken()}` } : {}),
       ...(options.headers || {}),
     },
   });
@@ -59,7 +74,9 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
       // Ignore JSON parsing issues and use the default message.
     }
 
-    throw new Error(errorMessage);
+    const error = new Error(errorMessage) as Error & { status?: number };
+    error.status = response.status;
+    throw error;
   }
 
   if (response.status === 204) {

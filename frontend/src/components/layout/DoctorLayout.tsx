@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { db } from '../../store/db';
+import { api, clearDoctorToken, getDoctorToken } from '../../lib/api';
 
 export const DoctorLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -21,17 +22,30 @@ export const DoctorLayout: React.FC = () => {
   const isActive = (path: string) => location.pathname.includes(path);
 
   useEffect(() => {
-    // Redirect to login if not authenticated as doctor
-    const auth = db.getAuthSession();
-    if (!auth || auth.role !== 'DOCTOR') {
-      navigate('/doctor/login');
-      return;
-    }
-    setDoctorName(auth.name || 'Dr.');
-    const nots = db.getNotifications().filter((n:any) => !n.for_role || n.for_role === 'doctor');
-    setNotifications(nots);
-    setUnreadCount(nots.filter((n:any) => !n.read).length);
-    setAuthChecked(true);
+    let active = true;
+    const verifyDoctor = async () => {
+      if (!getDoctorToken()) {
+        navigate('/doctor/login', { replace: true });
+        return;
+      }
+      try {
+        const auth = await api.get<{ id: string; name: string; email: string; role: string }>('/auth/doctor/me');
+        if (auth.role !== 'DOCTOR') throw new Error('Doctor role required');
+        db.setAuthSession(auth);
+        if (!active) return;
+        setDoctorName(auth.name || 'Dr.');
+        const nots = db.getNotifications().filter((n:any) => !n.for_role || n.for_role === 'doctor');
+        setNotifications(nots);
+        setUnreadCount(nots.filter((n:any) => !n.read).length);
+        setAuthChecked(true);
+      } catch {
+        clearDoctorToken();
+        db.clearAuthSession();
+        navigate('/doctor/login', { replace: true });
+      }
+    };
+    void verifyDoctor();
+    return () => { active = false; };
   }, []);
 
   // Close notifications when clicking outside
@@ -70,6 +84,10 @@ export const DoctorLayout: React.FC = () => {
     setNotifications(nots);
     setUnreadCount(0);
   };
+
+  if (!authChecked) {
+    return <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">Checking authentication...</div>;
+  }
 
   return (
     <div className="flex h-screen bg-[var(--background)] font-sans">
@@ -185,7 +203,7 @@ export const DoctorLayout: React.FC = () => {
             </div>
 
             <div className="pl-5 border-l border-slate-200">
-              <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-700 hover:bg-slate-100" onClick={() => navigate('/')}>
+              <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-700 hover:bg-slate-100" onClick={() => { clearDoctorToken(); db.clearAuthSession(); navigate('/doctor/login', { replace: true }); }}>
                 <LogOut size={16} className="mr-2" /> Logout
               </Button>
             </div>

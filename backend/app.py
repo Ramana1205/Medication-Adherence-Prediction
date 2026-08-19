@@ -1,8 +1,9 @@
 from datetime import datetime
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from backend.auth import authenticate_doctor, issue_doctor_token, require_doctor
 import pandas as pd
 from pathlib import Path
 import joblib
@@ -103,6 +104,11 @@ class PatientData(BaseModel):
     copay_tier_medium: int = Field(..., ge=0, le=1)
 
 
+class DoctorLoginRequest(BaseModel):
+    identifier: str
+    password: str
+
+
 # ============================================================
 # ROOT ENDPOINT
 # ============================================================
@@ -113,6 +119,17 @@ def root():
         "message": "Medication Adherence Prediction API",
         "status": "running",
     }
+
+
+@app.post("/auth/doctor/login")
+def doctor_login(payload: DoctorLoginRequest):
+    doctor = authenticate_doctor(payload.identifier, payload.password)
+    return {"access_token": issue_doctor_token(doctor), "token_type": "bearer", "doctor": doctor}
+
+
+@app.get("/auth/doctor/me")
+def doctor_me(doctor: dict = Depends(require_doctor)):
+    return {"id": doctor["sub"], "name": doctor.get("name", "Doctor"), "email": doctor.get("email", ""), "role": doctor["role"]}
 
 
 # ============================================================
@@ -324,12 +341,12 @@ def predict(patient: PatientData):
 # ============================================================
 
 @app.get("/patients")
-def list_patients():
+def list_patients(_doctor: dict = Depends(require_doctor)):
     return fetch_all_patients()
 
 
 @app.get("/patients/{patient_id}")
-def get_patient(patient_id: str):
+def get_patient(patient_id: str, _doctor: dict = Depends(require_doctor)):
     patient = fetch_patient_by_id(patient_id)
     if patient is None:
         raise HTTPException(status_code=404, detail="Patient not found")
@@ -337,12 +354,12 @@ def get_patient(patient_id: str):
 
 
 @app.post("/patients")
-def create_patient_endpoint(patient: dict):
+def create_patient_endpoint(patient: dict, _doctor: dict = Depends(require_doctor)):
     return create_patient(patient)
 
 
 @app.put("/patients/{patient_id}")
-def update_patient_endpoint(patient_id: str, patient: dict):
+def update_patient_endpoint(patient_id: str, patient: dict, _doctor: dict = Depends(require_doctor)):
     updated = update_patient(patient_id, patient)
     if updated is None:
         raise HTTPException(status_code=404, detail="Patient not found")
@@ -350,32 +367,32 @@ def update_patient_endpoint(patient_id: str, patient: dict):
 
 
 @app.get("/patients/{patient_id}/medications")
-def list_patient_medications(patient_id: str):
+def list_patient_medications(patient_id: str, _doctor: dict = Depends(require_doctor)):
     return fetch_medications(patient_id)
 
 
 @app.post("/patients/{patient_id}/medications")
-def create_medication_endpoint(patient_id: str, med: dict):
+def create_medication_endpoint(patient_id: str, med: dict, _doctor: dict = Depends(require_doctor)):
     return create_medication(patient_id, med)
 
 
 @app.get("/patients/{patient_id}/events")
-def list_patient_events(patient_id: str):
+def list_patient_events(patient_id: str, _doctor: dict = Depends(require_doctor)):
     return fetch_events(patient_id)
 
 
 @app.post("/medication-events")
-def create_medication_event_endpoint(event: dict):
+def create_medication_event_endpoint(event: dict, _doctor: dict = Depends(require_doctor)):
     return create_medication_event(event)
 
 
 @app.get("/patients/{patient_id}/messages")
-def list_patient_messages(patient_id: str):
+def list_patient_messages(patient_id: str, _doctor: dict = Depends(require_doctor)):
     return fetch_messages(patient_id)
 
 
 @app.post("/messages")
-def create_message_endpoint(payload: dict):
+def create_message_endpoint(payload: dict, _doctor: dict = Depends(require_doctor)):
     message = create_message(payload)
     patient = fetch_patient_by_id(payload.get("patient_id"))
     patient_name = patient.get("patient_name", "Patient") if patient else "Patient"
@@ -404,17 +421,17 @@ def create_message_endpoint(payload: dict):
 
 
 @app.get("/notifications")
-def list_notifications():
+def list_notifications(_doctor: dict = Depends(require_doctor)):
     return fetch_notifications()
 
 
 @app.get("/patients/{patient_id}/notifications")
-def list_patient_notifications_endpoint(patient_id: str):
+def list_patient_notifications_endpoint(patient_id: str, _doctor: dict = Depends(require_doctor)):
     return fetch_patient_notifications(patient_id)
 
 
 @app.put("/notifications/{notification_id}/read")
-def mark_notification_read_endpoint(notification_id: str):
+def mark_notification_read_endpoint(notification_id: str, _doctor: dict = Depends(require_doctor)):
     updated = mark_notification_read(notification_id)
     if updated is None:
         raise HTTPException(status_code=404, detail="Notification not found")
@@ -422,17 +439,17 @@ def mark_notification_read_endpoint(notification_id: str):
 
 
 @app.get("/interventions")
-def list_interventions():
+def list_interventions(_doctor: dict = Depends(require_doctor)):
     return fetch_interventions()
 
 
 @app.post("/interventions")
-def create_intervention_endpoint(intervention: dict):
+def create_intervention_endpoint(intervention: dict, _doctor: dict = Depends(require_doctor)):
     return create_intervention(intervention)
 
 
 @app.put("/interventions/{intervention_id}/status")
-def update_intervention_status_endpoint(intervention_id: str, status: dict):
+def update_intervention_status_endpoint(intervention_id: str, status: dict, _doctor: dict = Depends(require_doctor)):
     new_status = status.get("status")
     if not new_status:
         raise HTTPException(status_code=400, detail="status is required")
@@ -443,5 +460,5 @@ def update_intervention_status_endpoint(intervention_id: str, status: dict):
 
 
 @app.get("/messages")
-def all_messages():
+def all_messages(_doctor: dict = Depends(require_doctor)):
     return fetch_all_messages()

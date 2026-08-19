@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { HeartPulse } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { db } from '../store/db';
+import { api, setDoctorToken } from '../lib/api';
 
 export const DoctorLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -10,18 +11,21 @@ export const DoctorLogin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const res = db.authenticateDoctor(idOrEmail.trim(), password);
-    if (!res.success) {
-      if (res.error === 'not_found') setError('Doctor account not found.');
-      else if (res.error === 'invalid_password') setError('Invalid doctor credentials.');
-      else setError('Invalid doctor credentials.');
+    try {
+      const res = await api.post<{ access_token: string; doctor: { id: string; name: string; email: string; role: string } }>(
+        '/auth/doctor/login',
+        { identifier: idOrEmail.trim(), password },
+      );
+      setDoctorToken(res.access_token);
+      db.setAuthSession(res.doctor);
+      navigate('/doctor/dashboard');
+    } catch {
+      setError('Invalid doctor credentials.');
       return;
     }
-    // Navigate to doctor dashboard
-    navigate('/doctor/dashboard');
   };
 
   return (

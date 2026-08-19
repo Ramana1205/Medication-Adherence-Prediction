@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '../components/ui/Button';
 import { db } from '../store/db';
+import { clearDoctorToken } from '../lib/api';
 
 export const Profile: React.FC = () => {
   const auth = db.getAuthSession();
@@ -28,7 +29,7 @@ export const Profile: React.FC = () => {
         </div>
 
         <div className="mt-4">
-          <Button onClick={() => window.location.href = '/'}>Logout</Button>
+          <Button onClick={() => { clearDoctorToken(); db.clearAuthSession(); window.location.href = '/doctor/login'; }}>Logout</Button>
         </div>
       </div>
     </div>
