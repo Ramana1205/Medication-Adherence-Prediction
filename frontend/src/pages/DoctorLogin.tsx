@@ -23,8 +23,10 @@ export const DoctorLogin: React.FC = () => {
       clearPatientToken();
       db.setAuthSession(res.doctor);
       navigate('/doctor/dashboard');
-    } catch {
-      setError('Invalid doctor credentials.');
+    } catch (error) {
+      setError(error instanceof Error && error.message.includes('not configured')
+        ? 'Doctor authentication is not configured on the server. Contact the administrator.'
+        : 'Invalid doctor credentials.');
       return;
     }
   };

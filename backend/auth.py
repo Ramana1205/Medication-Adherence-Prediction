@@ -16,7 +16,10 @@ bearer_scheme = HTTPBearer(auto_error=False)
 def _setting(name: str) -> str:
     value = os.getenv(name)
     if not value:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Authentication is not configured: {name}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Authentication is not configured on the server: {name}",
+        )
     return value
 
 

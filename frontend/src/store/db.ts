@@ -1,5 +1,5 @@
 import { Patient, Medication, MedicationSlot, MedicationEvent, RiskLevel, MedicationStatus, Message, Notification } from '../types';
-import { api } from '../lib/api';
+import { api, getDoctorToken, getPatientToken } from '../lib/api';
 
 interface DBState {
   patients: Patient[];
@@ -52,6 +52,8 @@ class Database {
   }
 
   private async loadSharedData() {
+    // Protected API hydration waits until a signed session exists.
+    if (!getDoctorToken() && !getPatientToken()) return;
     try {
       const [patients, notifications, messages, interventions] = await Promise.all([
         api.get<Patient[]>('/patients').catch(() => this.state.patients),
