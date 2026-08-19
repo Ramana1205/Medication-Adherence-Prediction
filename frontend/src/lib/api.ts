@@ -34,6 +34,13 @@ export interface AdherenceResponse {
   taken: number;
   skipped: number;
   adherence: number | null;
+  history_taken: number;
+  history_skipped: number;
+  history_adherence: number | null;
+  today_scheduled: number;
+  today_taken: number;
+  today_skipped: number;
+  calendar_status: Record<string, 'green' | 'yellow' | 'red'>;
   projection: number | null;
   projection_note: string;
   suggestions: string[];

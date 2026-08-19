@@ -148,8 +148,6 @@ export const PatientDashboard: React.FC = () => {
   };
 
 
-  const takenCount = slots.filter(s => s.status === 'TAKEN').length;
-  const totalSlots = slots.length;
   const nextMed = slots.find(s => s.status === 'PENDING');
   
   const getMedName = (medId: string) => meds.find(m => m.medicine_id === medId)?.medicine_name || 'Unknown';
@@ -171,14 +169,26 @@ export const PatientDashboard: React.FC = () => {
   const p = patient as Patient;
 
   const stats = adherenceStats ? {
-    totalScheduled: adherenceStats.total_scheduled,
-    taken: adherenceStats.taken,
-    skipped: adherenceStats.skipped,
-    adherence: adherenceStats.adherence,
+    totalScheduled: adherenceStats.today_scheduled,
+    taken: adherenceStats.today_taken,
+    skipped: adherenceStats.today_skipped,
+    adherence: adherenceStats.history_adherence,
+    historyTaken: adherenceStats.history_taken,
+    historySkipped: adherenceStats.history_skipped,
     projection: adherenceStats.projection,
     projectionNote: adherenceStats.projection_note,
     suggestions: adherenceStats.suggestions,
   } : null;
+
+  const historyHasData = Boolean(stats && (stats.historyTaken + stats.historySkipped) > 0);
+  const historyLabel = !historyHasData ? 'No adherence history yet' : stats!.adherence! >= 90 ? 'Excellent' : stats!.adherence! >= 75 ? 'Good' : 'Needs attention';
+  const historyMessage = !historyHasData
+    ? 'Start recording your medication doses to build your adherence history.'
+    : stats!.adherence! >= 90
+      ? "You're doing great with your medication schedule."
+      : stats!.adherence! >= 75
+        ? 'Try to stay consistent with your medication schedule.'
+        : 'Several doses have been missed. Consider discussing barriers with your doctor.';
 
   const adherenceModal = (
     <div className={`fixed inset-0 z-50 flex items-center justify-center ${showAdherence ? '' : 'pointer-events-none opacity-0'}`}>
@@ -187,8 +197,8 @@ export const PatientDashboard: React.FC = () => {
         <h3 className="text-xl font-bold mb-2">Check Adherence</h3>
         {!p ? (
           <div className="text-slate-500">No patient selected.</div>
-        ) : (!stats || stats.adherence === null) ? (
-          <div className="text-slate-500">Not enough medication history is available to calculate adherence.</div>
+        ) : !stats ? (
+          <div className="text-slate-500">Adherence data is not available.</div>
         ) : (
           <div className="space-y-3">
             <div className="flex justify-between">
@@ -205,19 +215,23 @@ export const PatientDashboard: React.FC = () => {
             </div>
             <div className="flex justify-between">
               <div>Calculated adherence</div>
-              <div className="font-bold">{stats.adherence!.toFixed(2)}%</div>
+              <div className="font-bold">{stats.adherence === null ? 'No adherence history yet' : `${stats.adherence.toFixed(2)}%`}</div>
             </div>
+
+            {stats.adherence === null && (
+              <p className="text-sm text-slate-500">Start recording your medication doses to build your adherence history.</p>
+            )}
 
             <div>
               <h4 className="font-medium">Projected adherence</h4>
-              {stats.projection ? (
+              {stats.projection !== null ? (
                 <div className="text-sm text-slate-700">{stats.projection.toFixed(1)}% — <span className="text-slate-500">{stats.projectionNote}</span></div>
               ) : (
                 <div className="text-sm text-slate-500">Not enough historical data for a reliable projection.</div>
               )}
             </div>
 
-            {stats.suggestions.length > 0 && (
+              {stats.suggestions.length > 0 && (
               <div>
                 <h4 className="font-medium">Suggestions</h4>
                 <ul className="list-disc ml-5">
@@ -294,14 +308,7 @@ export const PatientDashboard: React.FC = () => {
   };
 
   const getDailyStatus = (dateIso: string) => {
-    const events = getEventsForDate(dateIso);
-    if (!events || events.length === 0) return 'none';
-    const total = events.length;
-    const taken = events.filter((e:any) => e.status === 'TAKEN').length;
-    const skipped = events.filter((e:any) => e.status === 'SKIPPED').length;
-    if (taken === total) return 'green';
-    if (skipped === total) return 'red';
-    return 'yellow';
+    return adherenceStats?.calendar_status[dateIso] || 'none';
   };
 
   const prevMonth = () => {
@@ -397,23 +404,23 @@ export const PatientDashboard: React.FC = () => {
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 lg:hidden">
             <h3 className="font-bold text-slate-800 mb-4">Your Adherence</h3>
             <div className="flex items-end gap-3 mb-2">
-              <span className="text-4xl font-black text-green-600">{patient.prior_adherence}%</span>
+              <span className="text-2xl font-black text-slate-700">{historyHasData ? `${stats!.adherence!.toFixed(2)}%` : 'No history'}</span>
             </div>
-            <p className="text-xs text-slate-500 mb-3 font-medium">Tracking your progress</p>
+            <p className="text-xs text-slate-500 mb-3 font-medium">{historyHasData ? 'Based on recorded TAKE/SKIP events' : 'Start recording your medication doses.'}</p>
             <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-              <div className="bg-green-500 h-full rounded-full transition-all duration-500" style={{width: `${patient.prior_adherence}%`}}></div>
+              <div className="bg-green-500 h-full rounded-full transition-all duration-500" style={{width: `${historyHasData ? stats!.adherence : 0}%`}}></div>
             </div>
           </div>
 
           {/* Today's Progress */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-center">
             <h4 className="font-bold text-slate-800 text-sm mb-2">Today's Progress</h4>
-            <p className="text-sm text-slate-500 mb-4"><span className="font-bold text-slate-800 text-lg">{takenCount} / {totalSlots}</span> medicines completed</p>
+            <p className="text-sm text-slate-500 mb-4"><span className="font-bold text-slate-800 text-lg">{adherenceStats?.today_taken ?? 0} / {adherenceStats?.today_scheduled ?? 0}</span> doses taken today</p>
             <div className="flex items-center gap-3">
               <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden flex-1">
-                <div className="bg-green-500 h-full rounded-full" style={{width: `${totalSlots ? (takenCount/totalSlots)*100 : 0}%`}}></div>
+                <div className="bg-green-500 h-full rounded-full" style={{width: `${adherenceStats?.today_scheduled ? ((adherenceStats.today_taken / adherenceStats.today_scheduled) * 100) : 0}%`}}></div>
               </div>
-              <span className="text-sm font-bold text-green-600">{totalSlots ? Math.round((takenCount/totalSlots)*100) : 0}%</span>
+              <span className="text-sm font-bold text-green-600">{adherenceStats?.today_scheduled ? `${Math.round((adherenceStats.today_taken / adherenceStats.today_scheduled) * 100)}%` : '0%'}</span>
             </div>
           </div>
 
@@ -568,19 +575,19 @@ export const PatientDashboard: React.FC = () => {
                     <circle 
                       cx="50" cy="50" r="40" fill="none" 
                       stroke="#10b981" strokeWidth="12" strokeLinecap="round"
-                      strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * patient.prior_adherence) / 100} 
+                      strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * (historyHasData ? stats!.adherence! : 0)) / 100} 
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-black text-slate-800">{patient.prior_adherence}%</span>
-                    <span className="text-[10px] font-bold text-green-600 uppercase">Good</span>
+                    <span className="text-sm font-black text-slate-800 text-center">{historyHasData ? `${stats!.adherence!.toFixed(0)}%` : 'No history'}</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">{historyLabel}</span>
                   </div>
                 </div>
                 
                 <div>
-                  <p className="font-bold text-slate-800 text-xl mb-2">{totalSlots ? Math.round((takenCount/totalSlots)*100) : 0}% of doses taken today</p>
-                  <div className="inline-flex px-3 py-1 bg-green-100 text-green-700 rounded text-xs font-bold mb-2">Good Work!</div>
-                  <p className="text-sm text-slate-500">Keep it up! You're doing great with your medication schedule.</p>
+                  <p className="font-bold text-slate-800 text-xl mb-2">{adherenceStats?.today_taken ?? 0} of {adherenceStats?.today_scheduled ?? 0} doses taken today</p>
+                  <div className={`inline-flex px-3 py-1 rounded text-xs font-bold mb-2 ${historyHasData && stats!.adherence! >= 90 ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>{historyLabel}</div>
+                  <p className="text-sm text-slate-500">{historyMessage}</p>
                 </div>
               </div>
 

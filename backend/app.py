@@ -130,6 +130,13 @@ class AdherenceSummary(BaseModel):
     taken: int
     skipped: int
     adherence: float | None
+    history_taken: int
+    history_skipped: int
+    history_adherence: float | None
+    today_scheduled: int
+    today_taken: int
+    today_skipped: int
+    calendar_status: dict[str, str]
     projection: float | None
     projection_note: str
     suggestions: list[str]
@@ -468,7 +475,28 @@ def patient_adherence(patient_id: str, user: dict = Depends(require_user)):
     taken = sum(event.get("status") == "TAKEN" for event in valid_events)
     skipped = sum(event.get("status") == "SKIPPED" for event in valid_events)
     total_scheduled = len(scheduled_doses)
-    adherence = (taken / total_scheduled * 100) if total_scheduled else None
+    completed = taken + skipped
+    adherence = (taken / completed * 100) if completed else None
+
+    today_key = today.isoformat()
+    today_scheduled = sum(dose[1] == today_key for dose in scheduled_doses)
+    today_events = [event for event in valid_events if event.get("date") == today_key]
+    today_taken = sum(event.get("status") == "TAKEN" for event in today_events)
+    today_skipped = sum(event.get("status") == "SKIPPED" for event in today_events)
+    calendar_status: dict[str, str] = {}
+    dates_with_schedule = {dose[1] for dose in scheduled_doses}
+    for date_key in dates_with_schedule:
+        date_events = [event for event in valid_events if event.get("date") == date_key]
+        if not date_events:
+            continue
+        date_taken = sum(event.get("status") == "TAKEN" for event in date_events)
+        date_skipped = sum(event.get("status") == "SKIPPED" for event in date_events)
+        if date_taken and date_skipped:
+            calendar_status[date_key] = "yellow"
+        elif date_taken:
+            calendar_status[date_key] = "green"
+        elif date_skipped:
+            calendar_status[date_key] = "red"
 
     def window_adherence(days: int) -> float | None:
         cutoff = today - timedelta(days=days)
@@ -496,6 +524,13 @@ def patient_adherence(patient_id: str, user: dict = Depends(require_user)):
         taken=taken,
         skipped=skipped,
         adherence=adherence,
+        history_taken=taken,
+        history_skipped=skipped,
+        history_adherence=adherence,
+        today_scheduled=today_scheduled,
+        today_taken=today_taken,
+        today_skipped=today_skipped,
+        calendar_status=calendar_status,
         projection=projection,
         projection_note=projection_note,
         suggestions=suggestions,
