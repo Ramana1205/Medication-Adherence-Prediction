@@ -2,8 +2,16 @@ from datetime import datetime
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-from backend.auth import authenticate_doctor, issue_doctor_token, require_doctor
+from pydantic import BaseModel, ConfigDict, Field
+from backend.auth import (
+    authenticate_doctor,
+    authenticate_patient,
+    issue_doctor_token,
+    issue_patient_token,
+    require_doctor,
+    require_patient,
+    require_user,
+)
 import pandas as pd
 from pathlib import Path
 import joblib
@@ -85,18 +93,18 @@ explainer = shap.TreeExplainer(model)
 # ============================================================
 
 class PatientData(BaseModel):
-    age: float = Field(..., ge=0)
-    chronic_conditions: float = Field(..., ge=0)
-    num_meds: float = Field(..., ge=0)
-    refill_gap_days: float = Field(..., ge=0)
+    age: int = Field(..., ge=0, le=120)
+    chronic_conditions: int = Field(..., ge=0)
+    num_meds: int = Field(..., ge=0)
+    refill_gap_days: int = Field(..., ge=0)
     prior_year_adherence: float = Field(..., ge=0, le=100)
     mental_health_flag: int = Field(..., ge=0, le=1)
-    missed_doses_recent: float = Field(..., ge=0)
-    days_since_last_refill: float = Field(..., ge=0)
-    missed_appointments: float = Field(..., ge=0)
-    medication_changes: float = Field(..., ge=0)
-    daily_dose_frequency: float = Field(..., ge=0)
-    medication_duration_days: float = Field(..., ge=0)
+    missed_doses_recent: int = Field(..., ge=0)
+    days_since_last_refill: int = Field(..., ge=0)
+    missed_appointments: int = Field(..., ge=0)
+    medication_changes: int = Field(..., ge=0)
+    daily_dose_frequency: int = Field(..., ge=1, le=4)
+    medication_duration_days: int = Field(..., ge=0)
     gender_F: int = Field(..., ge=0, le=1)
     gender_M: int = Field(..., ge=0, le=1)
     copay_tier_high: int = Field(..., ge=0, le=1)
@@ -107,6 +115,16 @@ class PatientData(BaseModel):
 class DoctorLoginRequest(BaseModel):
     identifier: str
     password: str
+
+
+class PatientLoginRequest(BaseModel):
+    patient_id: str
+    password: str = ""
+
+
+class PatientRecordRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    age: int = Field(..., ge=0, le=120)
 
 
 # ============================================================
@@ -125,6 +143,12 @@ def root():
 def doctor_login(payload: DoctorLoginRequest):
     doctor = authenticate_doctor(payload.identifier, payload.password)
     return {"access_token": issue_doctor_token(doctor), "token_type": "bearer", "doctor": doctor}
+
+
+@app.post("/auth/patient/login")
+def patient_login(payload: PatientLoginRequest):
+    patient = authenticate_patient(payload.patient_id.strip(), payload.password)
+    return {"access_token": issue_patient_token(patient), "token_type": "bearer", "patient": patient}
 
 
 @app.get("/auth/doctor/me")
@@ -310,6 +334,11 @@ def predict(patient: PatientData):
         'complex_dosing': "Consider simplifying dosing regimen",
     }
 
+
+@app.get("/auth/patient/me")
+def patient_me(patient: dict = Depends(require_patient)):
+    return {"id": patient["sub"], "name": patient.get("name", "Patient"), "role": patient["role"]}
+
     for feat, val, contrib, _abs in top_features:
         msg, tag, positive = interpret_feature(feat, val, contrib)
         if contrib > 0:
@@ -346,7 +375,9 @@ def list_patients(_doctor: dict = Depends(require_doctor)):
 
 
 @app.get("/patients/{patient_id}")
-def get_patient(patient_id: str, _doctor: dict = Depends(require_doctor)):
+def get_patient(patient_id: str, user: dict = Depends(require_user)):
+    if user["role"] == "PATIENT" and user["sub"] != patient_id:
+        raise HTTPException(status_code=403, detail="Patient access denied")
     patient = fetch_patient_by_id(patient_id)
     if patient is None:
         raise HTTPException(status_code=404, detail="Patient not found")
@@ -354,20 +385,22 @@ def get_patient(patient_id: str, _doctor: dict = Depends(require_doctor)):
 
 
 @app.post("/patients")
-def create_patient_endpoint(patient: dict, _doctor: dict = Depends(require_doctor)):
-    return create_patient(patient)
+def create_patient_endpoint(patient: PatientRecordRequest):
+    return create_patient(patient.model_dump())
 
 
 @app.put("/patients/{patient_id}")
-def update_patient_endpoint(patient_id: str, patient: dict, _doctor: dict = Depends(require_doctor)):
-    updated = update_patient(patient_id, patient)
+def update_patient_endpoint(patient_id: str, patient: PatientRecordRequest, _doctor: dict = Depends(require_doctor)):
+    updated = update_patient(patient_id, patient.model_dump())
     if updated is None:
         raise HTTPException(status_code=404, detail="Patient not found")
     return updated
 
 
 @app.get("/patients/{patient_id}/medications")
-def list_patient_medications(patient_id: str, _doctor: dict = Depends(require_doctor)):
+def list_patient_medications(patient_id: str, user: dict = Depends(require_user)):
+    if user["role"] == "PATIENT" and user["sub"] != patient_id:
+        raise HTTPException(status_code=403, detail="Patient access denied")
     return fetch_medications(patient_id)
 
 
@@ -377,22 +410,30 @@ def create_medication_endpoint(patient_id: str, med: dict, _doctor: dict = Depen
 
 
 @app.get("/patients/{patient_id}/events")
-def list_patient_events(patient_id: str, _doctor: dict = Depends(require_doctor)):
+def list_patient_events(patient_id: str, user: dict = Depends(require_user)):
+    if user["role"] == "PATIENT" and user["sub"] != patient_id:
+        raise HTTPException(status_code=403, detail="Patient access denied")
     return fetch_events(patient_id)
 
 
 @app.post("/medication-events")
-def create_medication_event_endpoint(event: dict, _doctor: dict = Depends(require_doctor)):
+def create_medication_event_endpoint(event: dict, user: dict = Depends(require_user)):
+    if user["role"] == "PATIENT" and user["sub"] != event.get("patient_id"):
+        raise HTTPException(status_code=403, detail="Patient access denied")
     return create_medication_event(event)
 
 
 @app.get("/patients/{patient_id}/messages")
-def list_patient_messages(patient_id: str, _doctor: dict = Depends(require_doctor)):
+def list_patient_messages(patient_id: str, user: dict = Depends(require_user)):
+    if user["role"] == "PATIENT" and user["sub"] != patient_id:
+        raise HTTPException(status_code=403, detail="Patient access denied")
     return fetch_messages(patient_id)
 
 
 @app.post("/messages")
-def create_message_endpoint(payload: dict, _doctor: dict = Depends(require_doctor)):
+def create_message_endpoint(payload: dict, user: dict = Depends(require_user)):
+    if user["role"] == "PATIENT" and payload.get("patient_id") != user["sub"]:
+        raise HTTPException(status_code=403, detail="Patient access denied")
     message = create_message(payload)
     patient = fetch_patient_by_id(payload.get("patient_id"))
     patient_name = patient.get("patient_name", "Patient") if patient else "Patient"
@@ -426,7 +467,9 @@ def list_notifications(_doctor: dict = Depends(require_doctor)):
 
 
 @app.get("/patients/{patient_id}/notifications")
-def list_patient_notifications_endpoint(patient_id: str, _doctor: dict = Depends(require_doctor)):
+def list_patient_notifications_endpoint(patient_id: str, user: dict = Depends(require_user)):
+    if user["role"] == "PATIENT" and user["sub"] != patient_id:
+        raise HTTPException(status_code=403, detail="Patient access denied")
     return fetch_patient_notifications(patient_id)
 
 

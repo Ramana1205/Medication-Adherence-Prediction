@@ -1,15 +1,21 @@
 import React from 'react';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { db } from '../store/db';
 import { clearDoctorToken } from '../lib/api';
 
 export const Profile: React.FC = () => {
+  const navigate = useNavigate();
   const auth = db.getAuthSession();
   const doctorName = auth?.name || 'Doctor';
   const doctorEmail = auth?.email || 'No email on file';
 
   return (
     <div className="p-6">
+      <button type="button" onClick={() => navigate('/doctor/dashboard')} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-4">
+        <ArrowLeft size={16} /> Back to Doctor Dashboard
+      </button>
       <h2 className="text-2xl font-bold mb-4">Doctor Profile</h2>
       <div className="bg-white rounded shadow p-4 max-w-xl">
         <div className="flex items-center gap-4">

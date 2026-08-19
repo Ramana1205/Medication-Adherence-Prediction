@@ -8,7 +8,7 @@ import { HeartPulse, ArrowLeft, CheckCircle2, ChevronRight, ChevronLeft } from '
 import { Button } from '../components/ui/Button';
 // Import the mock database that handles the ML logic and data storage
 import { db } from '../store/db';
-import { predictAdherence, type PredictionResponse } from '../lib/api';
+import { clearDoctorToken, predictAdherence, setPatientToken, api, type PredictionResponse } from '../lib/api';
 import type { Medication } from '../types';
 
 // Define the Registration Wizard component
@@ -59,10 +59,16 @@ export const PatientRegistration: React.FC = () => {
     setError('');
   };
 
+  const isIntegerInRange = (value: string, min: number, max?: number) => {
+    if (!/^\d+$/.test(value)) return false;
+    const parsed = Number(value);
+    return parsed >= min && (max === undefined || parsed <= max);
+  };
+
   // Validation function for Step 1: Basic Info
   const validateStep1 = () => {
     if (!formData.patient_name.trim()) return "Please enter your name.";
-    if (!formData.age || parseInt(formData.age) < 0 || parseInt(formData.age) > 120) return "Please enter a valid age.";
+    if (!isIntegerInRange(formData.age, 0, 120)) return "Age must be between 0 and 120.";
     if (!formData.gender) return "Please select a gender.";
     if (!formData.condition.trim()) return "Please enter your disease or condition.";
     if (formData.password && formData.password !== formData.confirmPassword) return "Passwords do not match.";
@@ -71,10 +77,10 @@ export const PatientRegistration: React.FC = () => {
 
   // Validation function for Step 2: Health Info
   const validateStep2 = () => {
-    if (!formData.chronic_conditions || parseInt(formData.chronic_conditions) < 0) return "Please enter a valid number of chronic conditions.";
-    if (!formData.num_meds || parseInt(formData.num_meds) < 0) return "Please enter a valid number of medicines.";
+    if (!isIntegerInRange(formData.chronic_conditions, 0)) return "Chronic conditions must be a whole number of 0 or more.";
+    if (!isIntegerInRange(formData.num_meds, 0)) return "Number of medicines must be a whole number of 0 or more.";
     if (!formData.dose_freq) return "Please select a daily frequency.";
-    if (!formData.med_duration || parseInt(formData.med_duration) < 0) return "Please enter a valid duration.";
+    if (!isIntegerInRange(formData.med_duration, 0)) return "Medication duration must be a whole number of 0 or more.";
     // If the user added medications, validate each
     for (let i = 0; i < medicationsList.length; i++) {
       const m = medicationsList[i];
@@ -95,10 +101,11 @@ export const PatientRegistration: React.FC = () => {
 
   // Validation function for Step 3: Adherence/Access Info
   const validateStep3 = () => {
-    if (!formData.missed_doses || parseInt(formData.missed_doses) < 0) return "Please enter a valid number of missed doses (0 or more).";
-    if (!formData.refill_gap || parseInt(formData.refill_gap) < 0) return "Please enter a valid refill gap in days (0 or more).";
-    if (!formData.days_since_last_refill || parseInt(formData.days_since_last_refill) < 0) return "Please enter valid days since last refill.";
-    if (!formData.missed_appointments || parseInt(formData.missed_appointments) < 0) return "Please enter a valid number of missed appointments (0 or more).";
+    if (!isIntegerInRange(formData.missed_doses, 0)) return "Missed doses must be a whole number of 0 or more.";
+    if (!isIntegerInRange(formData.missed_refills, 0)) return "Missed refills must be a whole number of 0 or more.";
+    if (!isIntegerInRange(formData.refill_gap, 0)) return "Refill gap must be a whole number of 0 or more.";
+    if (!isIntegerInRange(formData.days_since_last_refill, 0)) return "Days since last refill must be a whole number of 0 or more.";
+    if (!isIntegerInRange(formData.missed_appointments, 0)) return "Missed appointments must be a whole number of 0 or more.";
     return null;
   };
 
@@ -171,14 +178,19 @@ export const PatientRegistration: React.FC = () => {
     setError('');
 
     try {
-      const parsedAge = Number(formData.age) || 0;
-      const parsedChronicConditions = Number(formData.chronic_conditions) || 0;
-      const parsedNumMeds = Number(formData.num_meds) || 0;
-      const parsedRefillGap = Number(formData.refill_gap) || 0;
-      const parsedMissedDoses = Number(formData.missed_doses) || 0;
+      const validationError = validateStep1() || validateStep2() || validateStep3();
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+      const parsedAge = Number(formData.age);
+      const parsedChronicConditions = Number(formData.chronic_conditions);
+      const parsedNumMeds = Number(formData.num_meds);
+      const parsedRefillGap = Number(formData.refill_gap);
+      const parsedMissedDoses = Number(formData.missed_doses);
       const parsedPriorYearAdherence = Math.min(100, Math.max(0, 100 - (parsedMissedDoses * 2) - (parsedRefillGap * 1.5)));
-      const parsedDaysSinceLastRefill = Number(formData.days_since_last_refill) || 0;
-      const parsedMissedAppointments = Number(formData.missed_appointments) || 0;
+      const parsedDaysSinceLastRefill = Number(formData.days_since_last_refill);
+      const parsedMissedAppointments = Number(formData.missed_appointments);
       const parsedMedicationChanges = formData.med_changes === 'Yes' ? 1 : 0;
       const parsedDailyDoseFrequency = formData.dose_freq === 'Morning' ? 1 : (
         formData.dose_freq === 'Twice daily' ? 2 : (
@@ -226,7 +238,7 @@ export const PatientRegistration: React.FC = () => {
         condition: formData.condition,
         chronic_conditions: parsedChronicConditions,
         previous_missed_doses: parsedMissedDoses,
-        previous_missed_refills: Number(formData.missed_refills) || 0,
+        previous_missed_refills: Number(formData.missed_refills),
         refill_gap_days: parsedRefillGap,
         // Keep prior_adherence as the historical estimate derived from the form
         prior_adherence: Math.round(parsedPriorYearAdherence),
@@ -261,6 +273,12 @@ export const PatientRegistration: React.FC = () => {
 
       setPredictionResult(prediction);
       setSuccessId(newPatient.patient_id);
+      const auth = await api.post<{ access_token: string }>('/auth/patient/login', {
+        patient_id: newPatient.patient_id,
+        password: formData.password,
+      });
+      setPatientToken(auth.access_token);
+      clearDoctorToken();
       localStorage.setItem('active_patient_id', newPatient.patient_id);
       setStep(5);
     } catch (error) {
@@ -413,7 +431,7 @@ export const PatientRegistration: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-1">Age</label>
-                    <input type="number" name="age" value={formData.age} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Years" />
+                    <input type="number" name="age" min="0" max="120" step="1" value={formData.age} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Years" />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-1">Gender</label>
@@ -449,12 +467,12 @@ export const PatientRegistration: React.FC = () => {
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">How many chronic conditions do you have?</label>
                   <p className="text-xs text-slate-500 mb-2">E.g. Diabetes, Hypertension, Asthma</p>
-                  <input type="number" name="chronic_conditions" value={formData.chronic_conditions} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="0" />
+                  <input type="number" name="chronic_conditions" min="0" step="1" value={formData.chronic_conditions} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="0" />
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">How many medicines are you currently taking?</label>
-                  <input type="number" name="num_meds" value={formData.num_meds} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Number of prescriptions" />
+                  <input type="number" name="num_meds" min="0" step="1" value={formData.num_meds} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Number of prescriptions" />
                 </div>
 
                 <div>
@@ -469,7 +487,7 @@ export const PatientRegistration: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">How long have you been taking your current medicines?</label>
-                  <input type="number" name="med_duration" value={formData.med_duration} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="In days" />
+                  <input type="number" name="med_duration" min="0" step="1" value={formData.med_duration} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="In days" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Have you experienced any recent mental health concerns?</label>
@@ -535,17 +553,22 @@ export const PatientRegistration: React.FC = () => {
                 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">How many medicine doses have you missed recently?</label>
-                  <input type="number" name="missed_doses" value={formData.missed_doses} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Number of doses" />
+                  <input type="number" name="missed_doses" min="0" step="1" value={formData.missed_doses} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Number of doses" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">How many pharmacy refills have you missed?</label>
+                  <input type="number" name="missed_refills" min="0" step="1" value={formData.missed_refills} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Number of refills" />
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">How many days has it been since your last pharmacy refill?</label>
-                  <input type="number" name="days_since_last_refill" value={formData.days_since_last_refill} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Days" />
+                  <input type="number" name="days_since_last_refill" min="0" step="1" value={formData.days_since_last_refill} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Days" />
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">How many days was the gap between your expected refill and actual refill?</label>
-                  <input type="number" name="refill_gap" value={formData.refill_gap} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Number of days" />
+                  <input type="number" name="refill_gap" min="0" step="1" value={formData.refill_gap} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Number of days" />
                 </div>
 
                 <div>
@@ -559,7 +582,7 @@ export const PatientRegistration: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">How many medication/healthcare appointments have you missed recently?</label>
-                  <input type="number" name="missed_appointments" value={formData.missed_appointments} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Number of appointments" />
+                  <input type="number" name="missed_appointments" min="0" step="1" value={formData.missed_appointments} onChange={handleChange} className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" placeholder="Number of appointments" />
                 </div>
                 
                 <div>

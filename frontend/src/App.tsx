@@ -37,6 +37,7 @@ import { PatientAuthLanding } from './pages/PatientAuthLanding';
 import { PatientLogin } from './pages/PatientLogin';
 // Import the 3-step registration wizard for new patients
 import { PatientRegistration } from './pages/PatientRegistration';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 // Define the main App component using TypeScript functional component (React.FC) syntax
 const App: React.FC = () => {
@@ -52,7 +53,8 @@ const App: React.FC = () => {
         
         {/* DOCTOR ROUTES GROUP */}
         {/* All paths starting with "/doctor" will be wrapped inside the DoctorLayout component */}
-        <Route path="/doctor" element={<DoctorLayout />}>
+        <Route path="/doctor" element={<ProtectedRoute role="DOCTOR" />}>
+          <Route element={<DoctorLayout />}>
           
           {/* If the user navigates to exactly "/doctor", automatically redirect them to "/doctor/dashboard" */}
           <Route index element={<Navigate to="/doctor/dashboard" replace />} />
@@ -73,6 +75,7 @@ const App: React.FC = () => {
           {/* Render the PatientDetail page for a specific ID (e.g., "/doctor/patient/P0001") */}
           <Route path="patient/:id" element={<PatientDetail />} />
         
+          </Route>
         </Route>
 
         {/* Doctor Login page (public) */}
@@ -89,13 +92,11 @@ const App: React.FC = () => {
         <Route path="/patient/register" element={<PatientRegistration />} />
         
         {/* Route for the main patient adherence tracking dashboard */}
-        <Route path="/patient/dashboard" element={<PatientDashboard />} />
-
-        {/* Patient chat route (patient -> doctor conversation) */}
-        <Route path="/patient/chat" element={<PatientChat />} />
-
-        {/* Patient profile route */}
-        <Route path="/patient/profile" element={<PatientProfile />} />
+        <Route path="/patient" element={<ProtectedRoute role="PATIENT" />}>
+          <Route path="dashboard" element={<PatientDashboard />} />
+          <Route path="chat" element={<PatientChat />} />
+          <Route path="profile" element={<PatientProfile />} />
+        </Route>
 
         {/* FALLBACK ROUTE */}
         {/* If the user types a URL that doesn't match anything above (the "*" wildcard), redirect them back to the root "/" */}

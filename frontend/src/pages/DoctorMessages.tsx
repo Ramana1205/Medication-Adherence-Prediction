@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { db } from '../store/db';
 import { Message } from '../types';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
 export const DoctorMessages: React.FC = () => {
   const navigate = useNavigate();
@@ -96,6 +97,9 @@ export const DoctorMessages: React.FC = () => {
 
   return (
     <div className="p-6 bg-[var(--background)] min-h-screen">
+      <button type="button" onClick={() => navigate('/doctor/dashboard')} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-4">
+        <ArrowLeft size={16} /> Back to Doctor Dashboard
+      </button>
       <h2 className="text-2xl font-bold mb-4 text-[var(--text-primary)]">Doctor Messages</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="md:col-span-1 bg-[var(--surface)] rounded p-3 border border-[var(--border)]">

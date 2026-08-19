@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HeartPulse } from 'lucide-react';
+import { HeartPulse, ArrowLeft } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { db } from '../store/db';
-import { api, setDoctorToken } from '../lib/api';
+import { api, clearPatientToken, setDoctorToken } from '../lib/api';
 
 export const DoctorLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +20,7 @@ export const DoctorLogin: React.FC = () => {
         { identifier: idOrEmail.trim(), password },
       );
       setDoctorToken(res.access_token);
+      clearPatientToken();
       db.setAuthSession(res.doctor);
       navigate('/doctor/dashboard');
     } catch {
@@ -31,6 +32,9 @@ export const DoctorLogin: React.FC = () => {
   return (
     <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-4 font-sans">
       <div className="w-full max-w-md bg-[var(--surface)] rounded-2xl shadow-xl overflow-hidden border border-[var(--border)] p-8">
+        <button type="button" onClick={() => navigate('/')} className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors mb-6">
+          <ArrowLeft size={16} /> Back to main portal
+        </button>
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-[var(--primary)]/10 p-3 rounded-full">
             <HeartPulse size={28} className="text-[var(--primary)]" />

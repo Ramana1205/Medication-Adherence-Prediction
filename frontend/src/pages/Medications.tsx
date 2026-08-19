@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../store/db';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const Medications: React.FC = () => {
+  const navigate = useNavigate();
   const [meds, setMeds] = useState<any[]>([]);
 
   useEffect(() => {
@@ -15,6 +18,9 @@ export const Medications: React.FC = () => {
 
   return (
     <div className="p-6">
+      <button type="button" onClick={() => navigate('/doctor/dashboard')} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-4">
+        <ArrowLeft size={16} /> Back to Doctor Dashboard
+      </button>
       <h2 className="text-2xl font-bold mb-4">Medications</h2>
       <div className="bg-white rounded shadow p-4">
         <table className="w-full text-sm">

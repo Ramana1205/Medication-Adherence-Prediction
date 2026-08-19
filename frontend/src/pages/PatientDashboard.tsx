@@ -3,6 +3,7 @@ import { db } from '../store/db';
 import { Patient, MedicationSlot, Medication, Notification } from '../types';
 import { HeartPulse, Bell, MessageSquare, CheckCircle2, XCircle, Clock, Check, X, Calendar as CalendarIcon, User, Home, ChevronRight, LogOut, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { clearPatientToken } from '../lib/api';
 
 // Calendar generation and status helpers (deterministic, driven from persisted events)
 const formatDateKey = (year: number, monthIndex: number, day: number) => {
@@ -427,7 +428,7 @@ export const PatientDashboard: React.FC = () => {
             <button onClick={() => navigate('/patient/profile')} className="w-8 h-8 bg-[var(--primary)]/10 text-[var(--primary)] rounded-full flex items-center justify-center font-bold">
               {patient.patient_name.charAt(0)}
             </button>
-            <button onClick={() => { localStorage.removeItem('active_patient_id'); navigate('/patient/auth'); }} className="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center gap-2">
+            <button onClick={() => { clearPatientToken(); localStorage.removeItem('active_patient_id'); navigate('/patient/auth', { replace: true }); }} className="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center gap-2">
               <LogOut size={16} /> Logout
             </button>
           </div>

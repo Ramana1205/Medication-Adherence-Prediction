@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { db } from '../store/db';
+import { clearPatientToken } from '../lib/api';
 import { Button } from '../components/ui/Button';
 
 export const PatientProfile: React.FC = () => {
@@ -10,11 +11,7 @@ export const PatientProfile: React.FC = () => {
   const patient = activeId ? db.getPatient(activeId) : null;
 
   const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate('/patient/dashboard');
-    }
+    navigate('/patient/dashboard');
   };
 
   const profileContent = patient ? (
@@ -31,7 +28,7 @@ export const PatientProfile: React.FC = () => {
       </div>
 
       <div className="mt-4">
-        <Button onClick={() => { localStorage.removeItem('active_patient_id'); window.location.href = '/patient/auth'; }}>Logout</Button>
+        <Button onClick={() => { clearPatientToken(); localStorage.removeItem('active_patient_id'); window.location.href = '/patient/auth'; }}>Logout</Button>
       </div>
     </div>
   ) : (

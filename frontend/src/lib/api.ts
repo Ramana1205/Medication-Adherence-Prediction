@@ -33,6 +33,7 @@ export const API_URL =
   import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const DOCTOR_TOKEN_KEY = 'medadhere_doctor_access_token';
+const PATIENT_TOKEN_KEY = 'medadhere_patient_access_token';
 
 export function getDoctorToken(): string | null {
   return sessionStorage.getItem(DOCTOR_TOKEN_KEY);
@@ -46,12 +47,24 @@ export function setDoctorToken(token: string) {
   sessionStorage.setItem(DOCTOR_TOKEN_KEY, token);
 }
 
+export function getPatientToken(): string | null {
+  return sessionStorage.getItem(PATIENT_TOKEN_KEY);
+}
+
+export function clearPatientToken() {
+  sessionStorage.removeItem(PATIENT_TOKEN_KEY);
+}
+
+export function setPatientToken(token: string) {
+  sessionStorage.setItem(PATIENT_TOKEN_KEY, token);
+}
+
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(getDoctorToken() ? { Authorization: `Bearer ${getDoctorToken()}` } : {}),
+      ...((getDoctorToken() || getPatientToken()) ? { Authorization: `Bearer ${getDoctorToken() || getPatientToken()}` } : {}),
       ...(options.headers || {}),
     },
   });

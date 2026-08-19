@@ -8,6 +8,7 @@ import { HeartPulse, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 // Import the mock database instance to handle authentication logic
 import { db } from '../store/db';
+import { api, clearDoctorToken, setPatientToken } from '../lib/api';
 
 // Functional component for the Existing Patient Login screen
 export const PatientLogin: React.FC = () => {
@@ -22,7 +23,7 @@ export const PatientLogin: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   // Function called when the user submits the login form
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     // Prevent the default HTML form submission behavior (which refreshes the page)
     e.preventDefault();
     // Clear any previous error messages
@@ -34,26 +35,23 @@ export const PatientLogin: React.FC = () => {
       return; // Stop execution
     }
 
-    setLoading(true); // Show loading spinner/text
-    
-    // Simulate a network delay (like calling a real backend authentication API)
-    setTimeout(() => {
-      // Call the mock database to verify credentials
-      // Note: Synthetic patients from the CSV don't have passwords, so they will authenticate with just the ID.
-      // New patients created through the registration wizard WILL have their password checked if they provided one.
-      const patient = db.authenticatePatient(patientId, password);
-      
-      if (patient) {
-        // If authentication succeeds, store their ID in localStorage so the dashboard knows who to load
-        localStorage.setItem('active_patient_id', patient.patient_id);
-        // Redirect them to their personal dashboard
-        navigate('/patient/dashboard');
-      } else {
-        // If authentication fails, show an error message
-        setError('Patient not found or incorrect credential. Please try again.');
-        setLoading(false); // Stop loading state
-      }
-    }, 600); // 600ms artificial delay
+    setLoading(true);
+    try {
+      const localPatient = db.authenticatePatient(patientId.trim(), password);
+      if (!localPatient) throw new Error('Invalid patient credentials');
+      await api.post('/patients', localPatient);
+      const res = await api.post<{ access_token: string; patient: { id: string; name: string; role: string } }>(
+        '/auth/patient/login', { patient_id: patientId.trim(), password },
+      );
+      setPatientToken(res.access_token);
+      clearDoctorToken();
+      localStorage.setItem('active_patient_id', res.patient.id);
+      navigate('/patient/dashboard');
+    } catch {
+      setError('Patient not found or incorrect credential. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
